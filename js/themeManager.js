@@ -85,6 +85,7 @@ export function resolverIdTema(id) {
 
 // Variáveis que dependem do modo (claro/escuro). Os valores do escuro são os mesmos
 // que estão em :root no index.html.
+let temaApplySeq = 0; // proteção contra race condition na troca rápida de tema
 const VARIAVEIS_MODO = {
   escuro: {
     '--borda': 'rgba(255,255,255,0.18)',
@@ -128,6 +129,9 @@ export function aplicarTema(idOriginal, ajusteId = 'top') {
   const body = document.body;
   const c = tema.cores;
 
+  // Sequência para ignorar callbacks de temas anteriores (race condition)
+  const seq = ++temaApplySeq;
+
   const root = document.documentElement;
   root.style.setProperty('--bg-fundo', c.fundo);
   root.style.setProperty('--bg-card', c.card);
@@ -145,6 +149,7 @@ export function aplicarTema(idOriginal, ajusteId = 'top') {
   const img = new Image();
   img.src = tema.imagem;
   img.onload = () => {
+    if (seq !== temaApplySeq) return; // tema mudou enquanto a imagem carregava — ignora
     body.style.backgroundImage = `url(${tema.imagem})`;
     body.style.backgroundColor = c.fundo;
     if (ajuste.id === 'repeat') {

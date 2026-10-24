@@ -104,10 +104,15 @@ document.getElementById('btn-respiracao-consegui').addEventListener('click', asy
 });
 
 document.getElementById('btn-respiracao-falhei').addEventListener('click', async () => {
-  if (!userAtual) return;
-  await registerCigarroAutomatico('Fissura - não resistiu (respiração)', userAtual);
-  finalizarRespiracao();
-  navigateTo('screen-relapse');
+  if (!userAtual || salvandoRespiracao) return;
+  salvandoRespiracao = true;
+  try {
+    await registerCigarroAutomatico('Fissura - não resistiu (respiração)', userAtual);
+    finalizarRespiracao();
+    navigateTo('screen-relapse');
+  } finally {
+    salvandoRespiracao = false;
+  }
 });
 
 // Só marca como urgente/SOS quando veio do botão SOS. Pela lista de estratégias

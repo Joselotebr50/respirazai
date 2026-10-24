@@ -10,13 +10,25 @@ export async function renderDashboard(user, profile) {
 // profileEmMemoria (opcional): quando já temos o perfil carregado, evita reler users/{uid}.
 export async function atualizarContador(uid, profileEmMemoria = null) {
   if (!uid) return;
-  const counterDoc = await db.collection('counters').doc(uid).get();
-  const counter = counterDoc.exists ? counterDoc.data() : { daysWithout: 0, moneySaved: 0, cigarettesAvoided: 0 };
+
+  let counter;
+  try {
+    const counterDoc = await db.collection('counters').doc(uid).get();
+    counter = counterDoc.exists ? counterDoc.data() : { daysWithout: 0, moneySaved: 0, cigarettesAvoided: 0 };
+  } catch (e) {
+    console.warn('Erro ao ler counters:', e);
+    counter = { daysWithout: 0, moneySaved: 0, cigarettesAvoided: 0 };
+  }
 
   let profile = profileEmMemoria;
   if (!profile) {
-    const userDoc = await db.collection('users').doc(uid).get();
-    profile = userDoc.exists ? userDoc.data() : null;
+    try {
+      const userDoc = await db.collection('users').doc(uid).get();
+      profile = userDoc.exists ? userDoc.data() : null;
+    } catch (e) {
+      console.warn('Erro ao ler perfil:', e);
+      profile = null;
+    }
   }
 
   if (profile && profile.quitDate) {

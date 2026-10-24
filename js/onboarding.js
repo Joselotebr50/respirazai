@@ -165,10 +165,10 @@ export async function finalizarOnboarding(user, edicao) {
       document.getElementById('frase3').value.trim(),
       document.getElementById('frase4').value.trim()
     ].filter(f => f !== '');
-    const cigarettesPerDay = parseInt(document.getElementById('onboard-cigarettes').value) || 10;
-    const timeToFirst = parseInt(document.getElementById('onboard-time').value) || 15;
-    const yearsSmoking = parseInt(document.getElementById('onboard-years').value) || 5;
-    const costPerPack = parseFloat(document.getElementById('onboard-cost').value) || 12.00;
+    const cigarettesPerDay = Math.max(1, parseInt(document.getElementById('onboard-cigarettes').value) || 10);
+    const timeToFirst = Math.max(1, parseInt(document.getElementById('onboard-time').value) || 15);
+    const yearsSmoking = Math.max(1, parseInt(document.getElementById('onboard-years').value) || 5);
+    const costPerPack = Math.max(0.01, parseFloat(document.getElementById('onboard-cost').value) || 12.00);
     const quitMode = document.getElementById('onboard-quit-date').value || '7';
 
     // ÁUDIO: já vem em base64 (gravado ou enviado). Guardado num documento à parte
@@ -305,7 +305,7 @@ document.getElementById('btn-stop-recording').addEventListener('click', () => {
 document.getElementById('btn-play-recorded').addEventListener('click', function () {
   const audioData = this.dataset.audio || recordedAudioBase64;
   if (audioData) {
-    new Audio(audioData).play();
+    new Audio(audioData).play().catch(e => console.warn('Reprodução de áudio falhou:', e));
   }
 });
 
@@ -340,6 +340,14 @@ document.getElementById('btn-discard-audio').addEventListener('click', () => {
   delete btnPlay.dataset.audio;
   document.getElementById('onboard-audio').value = '';
 });
+
+// ===== EXPORT: LIMPAR RECURSOS (gravação de áudio) AO SAIR =====
+export function cleanupOnboarding() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop(); // dispara o handler 'stop' que limpa as tracks
+  }
+  clearTimeout(recordingAutoStopTimer);
+}
 
 // ===== FOTOS: SELECIONAR / SUBSTITUIR =====
 let fotoIndiceAtual = 0;

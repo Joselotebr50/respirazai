@@ -86,16 +86,18 @@ function iniciarRespiracaoEntreGoles() {
   const circle = document.getElementById('agua-breath-circle');
   const texto = document.getElementById('agua-respiracao-texto');
   
+  // Padrão 4-7-8: Inspire 4s, Segure 7s, Expire 8s (igual ao sub-app Respiração)
   const fases = [
-    { label: 'Inspire...', cor: '#3b82f6', escala: 1.3 },
-    { label: 'Segure...', cor: '#8b5cf6', escala: 1.3 },
-    { label: 'Expire...', cor: '#22c55e', escala: 0.7 },
+    { label: 'Inspire...', cor: '#3b82f6', escala: 1.3, tempo: 4000 },
+    { label: 'Segure...', cor: '#8b5cf6', escala: 1.3, tempo: 7000 },
+    { label: 'Expire...', cor: '#22c55e', escala: 0.7, tempo: 8000 },
   ];
   let faseIdx = 0;
   let ciclos = 0;
   
-  if (aguaRespiracaoInterval) clearInterval(aguaRespiracaoInterval);
-  aguaRespiracaoInterval = setInterval(() => {
+  if (aguaRespiracaoInterval) clearTimeout(aguaRespiracaoInterval);
+
+  function executarFaseAgua() {
     const fase = fases[faseIdx];
     circle.style.background = fase.cor;
     circle.style.transform = `scale(${fase.escala})`;
@@ -105,7 +107,6 @@ function iniciarRespiracaoEntreGoles() {
       faseIdx = 0;
       ciclos++;
       if (ciclos >= 3) {
-        clearInterval(aguaRespiracaoInterval);
         aguaRespiracaoInterval = null;
         texto.textContent = '✅ Respiração concluída!';
         circle.style.background = '#22c55e';
@@ -119,13 +120,16 @@ function iniciarRespiracaoEntreGoles() {
           mostrarGole();
         };
         respDiv.appendChild(continuarBtn);
+        return;
       }
     }
-  }, 2000);
+    aguaRespiracaoInterval = setTimeout(executarFaseAgua, fases[faseIdx === 0 ? fases.length - 1 : faseIdx - 1].tempo);
+  }
+  executarFaseAgua();
 }
 
 export function aguaPularGole() {
-  if (aguaRespiracaoInterval) clearInterval(aguaRespiracaoInterval);
+  if (aguaRespiracaoInterval) clearTimeout(aguaRespiracaoInterval);
   aguaGoleAtual++;
   mostrarGole();
 }
@@ -140,8 +144,11 @@ export async function aguaRegistrarFissura(intensidade) {
   try {
     await saveFissura(intensidade);
     if (aguaUser) {
-      await atualizarContador(aguaUser.uid, aguaProfile);
+      try { await atualizarContador(aguaUser.uid, aguaProfile); }
+      catch (e) { console.warn('Erro ao atualizar contador:', e); }
     }
+  } catch (e) {
+    console.error('Erro ao registrar fissura:', e);
   } finally {
     aguaSalvando = false;
   }
@@ -167,14 +174,13 @@ async function saveFissura(intensidade) {
       strategyUsed: 'agua',
       smoked: false
     });
-    if (intensidade !== 'forte') {
-      const counterRef = db.collection('counters').doc(aguaUser.uid);
-      const cost = aguaProfile?.costPerPack || 12.00;
-      await counterRef.set({
-        cigarettesAvoided: firebase.firestore.FieldValue.increment(1),
-        moneySaved: firebase.firestore.FieldValue.increment(cost / 20)
-      }, { merge: true });
-    }
+    // Completou o exercício = cigarro evitado (sempre incrementa)
+    const counterRef = db.collection('counters').doc(aguaUser.uid);
+    const cost = aguaProfile?.costPerPack || 12.00;
+    await counterRef.set({
+      cigarettesAvoided: firebase.firestore.FieldValue.increment(1),
+      moneySaved: firebase.firestore.FieldValue.increment(cost / 20)
+    }, { merge: true });
   } catch (e) {
     console.error('Erro ao salvar fissura:', e);
   }
@@ -189,14 +195,15 @@ window.aguaRepetir = aguaRepetir;
 
 // ===== CORREÇÃO: SAIR E ATUALIZAR DASHBOARD =====
 export async function aguaSairParaEstrategias() {
-  if (aguaRespiracaoInterval) clearInterval(aguaRespiracaoInterval);
+  if (aguaRespiracaoInterval) clearTimeout(aguaRespiracaoInterval);
   if (aguaUser) {
-    await atualizarContador(aguaUser.uid, aguaProfile);
+    try { await atualizarContador(aguaUser.uid, aguaProfile); }
+    catch (e) { console.warn('Erro ao atualizar contador:', e); }
   }
   navigateTo('screen-strategies');
 }
 window.aguaSairParaEstrategias = aguaSairParaEstrategias;
 
 export function sairAgua() {
-  if (aguaRespiracaoInterval) clearInterval(aguaRespiracaoInterval);
+  if (aguaRespiracaoInterval) clearTimeout(aguaRespiracaoInterval);
 }

@@ -6,7 +6,8 @@ import { login, register, logout, togglePasswordVisibility } from './auth.js';
 import { 
   iniciarOnboarding, 
   carregarOnboardingParaEdicao, 
-  finalizarOnboarding 
+  finalizarOnboarding,
+  cleanupOnboarding
 } from './onboarding.js';
 import { renderDashboard, atualizarContador } from './dashboard.js';
 import { mostrarEstrategias, voltarEstrategias, strategies as TODAS_ESTRATEGIAS } from './strategies.js';
@@ -15,6 +16,7 @@ import { iniciarAgua, sairAgua } from './subapps/agua.js';
 import { carregarTemaSalvo, aplicarTema } from './themeManager.js';
 import { carregarLessons } from './lessons.js';
 import { carregarHistory } from './history.js';
+import { cleanupModal } from './registroFissura.js';
 
 // ===== VARIÁVEIS GLOBAIS =====
 export let currentUser = null;
@@ -29,6 +31,7 @@ const PROTECTED_SCREENS = [
 
 // ===== ROTEADOR =====
 export function showScreen(id) {
+  cleanupModal(); // fecha modal de fissura se estiver aberto
   document.querySelectorAll('.screen').forEach(el => {
     el.classList.remove('active');
     el.style.display = 'none';
@@ -177,7 +180,7 @@ document.getElementById('toggle-login-password').addEventListener('click', funct
 document.getElementById('btn-register').addEventListener('click', () => register());
 document.getElementById('btn-logout').addEventListener('click', () => logout());
 
-// ===== ENGENAGEM (CONFIGURAÇÕES) =====
+// ===== ENGRENAGEM (CONFIGURAÇÕES) =====
 document.getElementById('btn-config').addEventListener('click', () => {
   if (!currentUser || !userProfile) { alert('Carregando perfil...'); return; }
   modoEdicao = true;
@@ -188,6 +191,7 @@ document.getElementById('btn-config').addEventListener('click', () => {
 // ===== ONBOARDING (SAIR E FINALIZAR) =====
 document.getElementById('btn-onboarding-sair').addEventListener('click', () => {
   if (confirm('Descartar alterações?')) {
+    cleanupOnboarding();
     if (modoEdicao) {
       modoEdicao = false;
       // desfaz a pré-visualização de tema feita durante a edição
@@ -254,10 +258,17 @@ document.getElementById('btn-go-history').addEventListener('click', () => {
 document.getElementById('btn-history-back').addEventListener('click', () => showScreen('screen-dashboard'));
 
 // ===== ÁUDIO MOTIVACIONAL =====
+let currentMotivationalAudio = null;
 document.getElementById('btn-play-motivational').addEventListener('click', () => {
+  if (currentMotivationalAudio) {
+    currentMotivationalAudio.pause();
+    currentMotivationalAudio = null;
+    return;
+  }
   if (userProfile && userProfile.audioMotivacional) {
-    const audio = new Audio(userProfile.audioMotivacional);
-    audio.play();
+    currentMotivationalAudio = new Audio(userProfile.audioMotivacional);
+    currentMotivationalAudio.play().catch(e => console.warn('Reprodução de áudio falhou:', e));
+    currentMotivationalAudio.addEventListener('ended', () => { currentMotivationalAudio = null; });
   } else {
     alert('Nenhum áudio motivacional cadastrado.');
   }
@@ -350,6 +361,11 @@ document.getElementById('btn-save-relapse').addEventListener('click', async () =
       trigger,
       feeling,
       lessonLearned: learn
+    });
+    // Reseta a data de início do plano para hoje — o contador
+    // de "dias sem fumar" volta a contar a partir de agora.
+    await db.collection('users').doc(currentUser.uid).update({
+      quitDate: new Date().toISOString()
     });
     showScreen('screen-dashboard');
   } catch (e) {

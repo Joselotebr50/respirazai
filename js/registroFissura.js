@@ -24,6 +24,15 @@ export function rotuloGatilho(id) {
   return g ? g.label : (id || '');
 }
 
+// Exporta função para limpar modal preso na tela ao navegar
+export function cleanupModal() {
+  if (janelaAberta) {
+    const overlay = document.querySelector('div[style*="z-index:9999"]');
+    if (overlay) overlay.remove();
+    janelaAberta = false;
+  }
+}
+
 let janelaAberta = false;
 
 // Resolve com { intensidade: number, gatilho: string|null } ou null se cancelar.
