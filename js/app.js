@@ -14,7 +14,7 @@ import { mostrarEstrategias, voltarEstrategias, strategies as TODAS_ESTRATEGIAS 
 import { iniciarRespiracao, finalizarRespiracao } from './subapps/respiracao.js';
 import { iniciarAgua, sairAgua } from './subapps/agua.js';
 import { carregarTemaSalvo, aplicarTema } from './themeManager.js';
-import { carregarLessons } from './lessons.js';
+import { carregarLessons, getLicaoDoDia } from './lessons.js';
 import { carregarHistory } from './history.js';
 import { cleanupModal } from './registroFissura.js';
 
@@ -26,7 +26,7 @@ export let modoEdicao = false;
 const PROTECTED_SCREENS = [
   'screen-onboarding', 'screen-dashboard', 'screen-strategies',
   'screen-register-cigarette', 'screen-register-craving', 'screen-relapse',
-  'screen-lessons', 'screen-history', 'screen-agua', 'screen-respiracao'
+  'screen-lessons', 'screen-lesson-detail', 'screen-history', 'screen-agua', 'screen-respiracao'
 ];
 
 // ===== ROTEADOR =====
@@ -51,6 +51,16 @@ export function showScreen(id) {
   }
   if (id === 'screen-dashboard' && currentUser && userProfile) {
     renderDashboard(currentUser, userProfile).catch(e => console.error('Erro ao atualizar dashboard:', e));
+    // Mostra Lição do Dia
+    const licao = getLicaoDoDia();
+    const lodCard = document.getElementById('lesson-of-day-card');
+    const lodTitle = document.getElementById('lesson-of-day-title');
+    if (licao && lodCard && lodTitle) {
+      lodTitle.textContent = licao.title;
+      lodCard.style.display = 'block';
+    } else if (lodCard) {
+      lodCard.style.display = 'none';
+    }
   }
 }
 
@@ -245,10 +255,16 @@ document.getElementById('btn-strategies-back').addEventListener('click', () => {
 
 // ===== LIÇÕES =====
 document.getElementById('btn-go-lessons').addEventListener('click', () => {
-  carregarLessons();
+  carregarLessons(currentUser);
   showScreen('screen-lessons');
 });
 document.getElementById('btn-lessons-back').addEventListener('click', () => showScreen('screen-dashboard'));
+
+// Lição do Dia no dashboard
+document.getElementById('lesson-of-day-card')?.addEventListener('click', () => {
+  carregarLessons(currentUser);
+  showScreen('screen-lessons');
+});
 
 // ===== HISTÓRICO =====
 document.getElementById('btn-go-history').addEventListener('click', () => {
