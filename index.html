@@ -365,25 +365,34 @@
     body.tema-claro #btn-play-motivational:hover {
       background: color-mix(in srgb, var(--bg-card) 90%, transparent);
     }
-    /* ===== ÁGUA: PROGRESS RAIL ===== */
-    .agua-rail {
-      display: flex; justify-content: center; align-items: center; gap: 8px;
-      padding: 16px 0 8px; max-width: 360px; margin: 0 auto;
+    /* ===== ÁGUA: PROGRESS BAR (labelizada) ===== */
+    .agua-progress {
+      max-width: 360px; margin: 0 auto 12px; padding: 12px 16px 8px;
     }
-    .agua-rail-dot {
-      width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s ease;
+    .agua-progress-label {
+      display: block; font-size: 13px; font-weight: 600; color: var(--cor-secundaria);
+      margin-bottom: 6px; text-align: center;
     }
-    .agua-rail-dot.done { background: var(--cor-secundaria); }
-    .agua-rail-dot.current {
-      background: var(--cor-secundaria); width: 14px; height: 14px;
-      box-shadow: 0 0 12px rgba(79, 209, 240, 0.5);
-      animation: agua-pulse 1.5s ease-in-out infinite;
+    .agua-progress-bar {
+      height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1);
+      overflow: hidden;
     }
-    .agua-rail-dot.future { background: rgba(255, 255, 255, 0.15); }
-    @keyframes agua-pulse {
-      0%, 100% { box-shadow: 0 0 8px rgba(79, 209, 240, 0.3); }
-      50% { box-shadow: 0 0 16px rgba(79, 209, 240, 0.7); }
+    .agua-progress-fill {
+      height: 100%; border-radius: 3px; background: var(--cor-secundaria);
+      transition: width 0.4s ease;
     }
+
+    /* ===== ÁGUA: VISUAL FLOW ===== */
+    .agua-flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 4px; margin: 16px 0 8px; flex-wrap: wrap;
+    }
+    .agua-flow-step {
+      padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      background: rgba(79,209,240,0.12); color: var(--cor-secundaria);
+      white-space: nowrap;
+    }
+    .agua-flow-arrow { color: var(--texto-fraco); font-size: 12px; }
 
     /* ===== ÁGUA: CARD ===== */
     .agua-card {
@@ -400,6 +409,10 @@
     .agua-body { font-size: 15px; color: var(--texto-medio); line-height: 1.5; margin-bottom: 8px; }
     .agua-hint { font-size: 13px; color: var(--texto-fraco); margin-top: 4px; }
     .agua-encourage { font-size: 14px; color: var(--cor-secundaria); margin-top: 12px; font-weight: 500; }
+    .agua-next-hint {
+      display: block; max-width: 360px; margin: 4px auto 0;
+      font-size: 12px; color: var(--texto-fraco); text-align: center;
+    }
 
     /* ===== ÁGUA: STEP TRANSITIONS ===== */
     .agua-step { display: none; opacity: 0; transform: translateY(12px); transition: opacity 0.3s ease, transform 0.3s ease; }
@@ -410,6 +423,8 @@
     .agua-step.active .agua-card > *:nth-child(3) { animation-delay: 0.12s; }
     .agua-step.active .agua-card > *:nth-child(4) { animation-delay: 0.18s; }
     .agua-step.active .agua-card > *:nth-child(5) { animation-delay: 0.24s; }
+    .agua-step.active .agua-card > *:nth-child(6) { animation-delay: 0.30s; }
+    .agua-step.active .agua-card > *:nth-child(7) { animation-delay: 0.36s; }
     @keyframes agua-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ===== ÁGUA: CHOOSE GRID ===== */
@@ -435,24 +450,31 @@
       font-size: 13px; font-weight: 600; margin-bottom: 12px;
     }
 
-    /* ===== ÁGUA: BREATH RING ===== */
-    .agua-breath-ring-container { position: relative; width: 140px; height: 140px; margin: 20px auto; }
+    /* ===== ÁGUA: BREATH RING (maior e mais claro) ===== */
+    .agua-breath-ring-container { position: relative; width: 180px; height: 180px; margin: 16px auto; }
     .agua-breath-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     .agua-breath-circle-inner {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .agua-breath-countdown { font-size: 36px; font-weight: 700; color: white; line-height: 1; }
-    .agua-breath-label-text { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.8); margin-top: 4px; }
+    .agua-breath-countdown { font-size: 48px; font-weight: 700; color: white; line-height: 1; }
+    .agua-breath-label-text { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.85); margin-top: 6px; }
     .agua-breath-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
     .agua-breath-why { color: var(--texto-fraco); }
     .agua-breath-cycle { color: var(--cor-secundaria); font-weight: 600; }
-    .agua-breath-phases { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+    .agua-breath-phases { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
     .agua-phase {
-      padding: 4px 10px; border-radius: 50px; font-size: 12px; font-weight: 500;
-      background: rgba(255,255,255,0.08); color: var(--texto-fraco); transition: all 0.2s;
+      padding: 5px 12px; border-radius: 50px; font-size: 12px; font-weight: 500;
+      background: rgba(255,255,255,0.08); color: var(--texto-fraco); transition: all 0.3s;
     }
-    .agua-phase.active { background: var(--cor-primaria); color: white; }
+    .agua-phase.active { background: var(--cor-primaria); color: white; transform: scale(1.08); }
+    .agua-breath-instruction {
+      font-size: 15px; font-weight: 600; color: var(--cor-secundaria);
+      margin-top: 14px; transition: all 0.3s;
+    }
+    .agua-breath-remaining {
+      font-size: 12px; color: var(--texto-fraco); margin-top: 6px;
+    }
 
     /* ===== ÁGUA: CHECK-IN GRID ===== */
     .agua-checkin-grid {
@@ -658,25 +680,28 @@
       <button class="logout-btn" id="btn-agua-sair">Voltar</button>
     </div>
 
-    <!-- STEP 0: INTRO -->
+    <!-- STEP 0: INTRO + CHOOSE (combinado) -->
     <div id="agua-step-intro" class="agua-step active">
-      <div class="agua-rail" id="agua-rail-intro"></div>
       <div class="agua-card">
         <div class="agua-emoji-hero">💧</div>
         <h2 class="agua-title">A fissura passa em 5 minutos</h2>
-        <p class="agua-body">Vamos beber água devagar, gole a gole,<br>com respiração entre cada um.<br><strong>3 goles. ~2 minutos.</strong></p>
-        <p class="agua-hint">Você vai sentir a fissura diminuir.</p>
+        <p class="agua-body">Vamos beber devagar, gole a gole, com respiração entre cada um.</p>
+        <div class="agua-flow">
+          <span class="agua-flow-step">🥤 Gole</span>
+          <span class="agua-flow-arrow">→</span>
+          <span class="agua-flow-step">🌬️ Resp</span>
+          <span class="agua-flow-arrow">→</span>
+          <span class="agua-flow-step">🥤 Gole</span>
+          <span class="agua-flow-arrow">→</span>
+          <span class="agua-flow-step">🌬️ Resp</span>
+          <span class="agua-flow-arrow">→</span>
+          <span class="agua-flow-step">🥤 Gole</span>
+          <span class="agua-flow-arrow">→</span>
+          <span class="agua-flow-step">✓</span>
+        </div>
+        <p class="agua-hint">3 goles · Respiração 4-7-8 · ~2 min</p>
       </div>
-      <button class="btn btn-primary agua-cta" id="agua-btn-start">Começar a beber água</button>
-    </div>
-
-    <!-- STEP 1: CHOOSE -->
-    <div id="agua-step-choose" class="agua-step">
-      <div class="agua-rail" id="agua-rail-choose"></div>
-      <div class="agua-card">
-        <h2 class="agua-title">O que você tem pra beber?</h2>
-        <p class="agua-hint">Escolha e já prepare na mão.</p>
-      </div>
+      <p class="agua-hint" style="max-width:360px;margin:0 auto 8px;text-align:center;">O que você tem pra beber? Toque para começar:</p>
       <div class="agua-choose-grid">
         <button class="agua-option" data-variation="agua_gelada">
           <span class="agua-option-emoji">🧊</span>
@@ -701,9 +726,12 @@
       </div>
     </div>
 
-    <!-- STEP 2: GULP 1 -->
+    <!-- STEP 1: GULP 1 -->
     <div id="agua-step-gulp1" class="agua-step">
-      <div class="agua-rail" id="agua-rail-gulp1"></div>
+      <div class="agua-progress" id="agua-progress-gulp1">
+        <span class="agua-progress-label">Gole 1 de 3</span>
+        <div class="agua-progress-bar"><div class="agua-progress-fill" style="width:0%"></div></div>
+      </div>
       <div class="agua-card">
         <div class="agua-gulp-badge" id="agua-gulp1-badge"></div>
         <div class="agua-emoji-hero" id="agua-gulp1-emoji"></div>
@@ -711,13 +739,17 @@
         <p class="agua-body" id="agua-gulp1-body"></p>
         <p class="agua-encourage" id="agua-gulp1-encourage"></p>
       </div>
-      <button class="btn btn-primary agua-cta" id="agua-btn-gulp1">Tomei o gole</button>
-      <button class="btn btn-outline btn-sm agua-skip" id="agua-skip-gulp1">Avançar sem beber</button>
+      <button class="btn btn-primary agua-cta" id="agua-btn-gulp1">✓ Tomei o gole</button>
+      <button class="btn btn-outline btn-sm agua-skip" id="agua-skip-gulp1">Pular este gole →</button>
+      <p class="agua-next-hint">Próximo: respiração 4-7-8 (2 ciclos · ~38s)</p>
     </div>
 
-    <!-- STEP 3: BREATH 1 -->
+    <!-- STEP 2: BREATH 1 -->
     <div id="agua-step-breath1" class="agua-step">
-      <div class="agua-rail" id="agua-rail-breath1"></div>
+      <div class="agua-progress" id="agua-progress-breath1">
+        <span class="agua-progress-label">Respiração 1 de 2</span>
+        <div class="agua-progress-bar"><div class="agua-progress-fill" style="width:17%"></div></div>
+      </div>
       <div class="agua-card">
         <div class="agua-breath-header">
           <span class="agua-breath-why">Respirar acalma a fissura</span>
@@ -738,14 +770,18 @@
           <span class="agua-phase">Segure 7s</span>
           <span class="agua-phase">Expire 8s</span>
         </div>
-        <p class="agua-encourage">Siga o ritmo. Sem pressa.</p>
+        <p class="agua-breath-instruction" id="agua-breath1-instruction">Inspire lentamente pelo nariz</p>
+        <p class="agua-breath-remaining" id="agua-breath1-remaining">~38s restantes</p>
       </div>
-      <button class="btn btn-outline btn-sm agua-skip-breath" id="agua-skip-breath1">Pular respiração</button>
+      <button class="btn btn-outline btn-sm agua-skip-breath" id="agua-skip-breath1">Pular → próximo gole</button>
     </div>
 
-    <!-- STEP 4: GULP 2 -->
+    <!-- STEP 3: GULP 2 -->
     <div id="agua-step-gulp2" class="agua-step">
-      <div class="agua-rail" id="agua-rail-gulp2"></div>
+      <div class="agua-progress" id="agua-progress-gulp2">
+        <span class="agua-progress-label">Gole 2 de 3</span>
+        <div class="agua-progress-bar"><div class="agua-progress-fill" style="width:33%"></div></div>
+      </div>
       <div class="agua-card">
         <div class="agua-gulp-badge" id="agua-gulp2-badge"></div>
         <div class="agua-emoji-hero" id="agua-gulp2-emoji"></div>
@@ -753,13 +789,17 @@
         <p class="agua-body" id="agua-gulp2-body"></p>
         <p class="agua-encourage" id="agua-gulp2-encourage"></p>
       </div>
-      <button class="btn btn-primary agua-cta" id="agua-btn-gulp2">Tomei o gole</button>
-      <button class="btn btn-outline btn-sm agua-skip" id="agua-skip-gulp2">Avançar sem beber</button>
+      <button class="btn btn-primary agua-cta" id="agua-btn-gulp2">✓ Tomei o gole</button>
+      <button class="btn btn-outline btn-sm agua-skip" id="agua-skip-gulp2">Pular este gole →</button>
+      <p class="agua-next-hint">Próximo: respiração 4-7-8 (2 ciclos · ~38s)</p>
     </div>
 
-    <!-- STEP 5: BREATH 2 -->
+    <!-- STEP 4: BREATH 2 -->
     <div id="agua-step-breath2" class="agua-step">
-      <div class="agua-rail" id="agua-rail-breath2"></div>
+      <div class="agua-progress" id="agua-progress-breath2">
+        <span class="agua-progress-label">Respiração 2 de 2</span>
+        <div class="agua-progress-bar"><div class="agua-progress-fill" style="width:50%"></div></div>
+      </div>
       <div class="agua-card">
         <div class="agua-breath-header">
           <span class="agua-breath-why">Respirar acalma a fissura</span>
@@ -780,14 +820,18 @@
           <span class="agua-phase">Segure 7s</span>
           <span class="agua-phase">Expire 8s</span>
         </div>
-        <p class="agua-encourage">Siga o ritmo. Sem pressa.</p>
+        <p class="agua-breath-instruction" id="agua-breath2-instruction">Inspire lentamente pelo nariz</p>
+        <p class="agua-breath-remaining" id="agua-breath2-remaining">~38s restantes</p>
       </div>
-      <button class="btn btn-outline btn-sm agua-skip-breath" id="agua-skip-breath2">Pular respiração</button>
+      <button class="btn btn-outline btn-sm agua-skip-breath" id="agua-skip-breath2">Pular → próximo gole</button>
     </div>
 
-    <!-- STEP 6: GULP 3 -->
+    <!-- STEP 5: GULP 3 -->
     <div id="agua-step-gulp3" class="agua-step">
-      <div class="agua-rail" id="agua-rail-gulp3"></div>
+      <div class="agua-progress" id="agua-progress-gulp3">
+        <span class="agua-progress-label">Gole 3 de 3 — o último!</span>
+        <div class="agua-progress-bar"><div class="agua-progress-fill" style="width:67%"></div></div>
+      </div>
       <div class="agua-card">
         <div class="agua-gulp-badge" id="agua-gulp3-badge"></div>
         <div class="agua-emoji-hero" id="agua-gulp3-emoji"></div>
@@ -795,13 +839,17 @@
         <p class="agua-body" id="agua-gulp3-body"></p>
         <p class="agua-encourage" id="agua-gulp3-encourage"></p>
       </div>
-      <button class="btn btn-primary agua-cta" id="agua-btn-gulp3">Terminei de beber</button>
-      <button class="btn btn-outline btn-sm agua-skip" id="agua-skip-gulp3">Avançar sem beber</button>
+      <button class="btn btn-primary agua-cta" id="agua-btn-gulp3">✓ Terminei de beber</button>
+      <button class="btn btn-outline btn-sm agua-skip" id="agua-skip-gulp3">Pular este gole →</button>
+      <p class="agua-next-hint">Próximo: avaliar a fissura</p>
     </div>
 
-    <!-- STEP 7: CHECK-IN -->
+    <!-- STEP 6: CHECK-IN -->
     <div id="agua-step-checkin" class="agua-step">
-      <div class="agua-rail" id="agua-rail-checkin"></div>
+      <div class="agua-progress" id="agua-progress-checkin">
+        <span class="agua-progress-label">Quase lá!</span>
+        <div class="agua-progress-bar"><div class="agua-progress-fill" style="width:83%"></div></div>
+      </div>
       <div class="agua-card">
         <div class="agua-emoji-hero">🩺</div>
         <h2 class="agua-title">Como está a fissura agora?</h2>
@@ -827,9 +875,12 @@
       </div>
     </div>
 
-    <!-- STEP 8: DONE -->
+    <!-- STEP 7: DONE -->
     <div id="agua-step-done" class="agua-step">
-      <div class="agua-rail" id="agua-rail-done"></div>
+      <div class="agua-progress">
+        <span class="agua-progress-label">Concluído!</span>
+        <div class="agua-progress-bar"><div class="agua-progress-fill" style="width:100%"></div></div>
+      </div>
       <div class="agua-card agua-card-celebration">
         <div class="agua-emoji-hero agua-emoji-bounce">🎉</div>
         <h2 class="agua-title" id="agua-done-title">Você cuidou de si!</h2>
@@ -839,7 +890,7 @@
           <span class="agua-done-stat-label">cigarro evitado</span>
         </div>
       </div>
-      <button class="btn btn-primary agua-cta" id="agua-btn-repeat">🔄 Fazer de novo</button>
+      <button class="btn btn-primary agua-cta" id="agua-btn-repeat">Fazer de novo</button>
       <button class="btn btn-outline" id="agua-btn-other-strategies">Ver outras estratégias</button>
     </div>
   </div>

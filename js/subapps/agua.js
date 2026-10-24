@@ -1,4 +1,4 @@
-// js/subapps/agua.js — Beber Água sub-app (rewritten)
+// js/subapps/agua.js — Beber Água sub-app (redesigned UX)
 import { db } from '../firebase.js';
 import { navigateTo } from '../app.js';
 import { atualizarContador } from '../dashboard.js';
@@ -10,10 +10,10 @@ let aguaVariacao = null;
 let aguaCurrentStep = 0;
 let aguaBreathTimers = [];
 
-// Step order: 0=intro, 1=choose, 2=gulp1, 3=breath1, 4=gulp2, 5=breath2, 6=gulp3, 7=checkin, 8=done
+// Step order (8 steps, combined intro+choose):
+// 0=intro, 1=gulp1, 2=breath1, 3=gulp2, 4=breath2, 5=gulp3, 6=checkin, 7=done
 const STEP_IDS = [
   'agua-step-intro',
-  'agua-step-choose',
   'agua-step-gulp1',
   'agua-step-breath1',
   'agua-step-gulp2',
@@ -53,9 +53,9 @@ const GULP_INSTRUCTIONS = {
 };
 
 const GULP_ENCOURAGEMENT = {
-  1: '🎯 Foco no momento presente.',
-  2: '🌿 A fissura já está mais fraca.',
-  3: '✨ Quase lá. Último gole.'
+  1: 'Foco no momento presente.',
+  2: 'A fissura já está mais fraca.',
+  3: 'Quase lá. Último gole.'
 };
 
 const GULP_BADGES = {
@@ -64,36 +64,24 @@ const GULP_BADGES = {
   3: 'Gole 3 de 3 — o último!'
 };
 
-// ===== PROGRESS RAIL =====
-function railDotState(dotIndex, currentStep) {
-  if (currentStep >= 7) return 'done';
-  if (dotIndex < currentStep) return 'done';
-  if (dotIndex === currentStep) return 'current';
-  return 'future';
-}
-
-function renderRail(containerId, currentStep) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = '';
-  for (let i = 0; i < 7; i++) {
-    const dot = document.createElement('span');
-    dot.className = 'agua-rail-dot ' + railDotState(i, currentStep);
-    container.appendChild(dot);
-  }
-}
+// ===== BREATHING PHASE INSTRUCTIONS =====
+const BREATH_PHASE_INSTRUCTIONS = [
+  'Inspire lentamente pelo nariz',
+  'Segure o ar nos pulmões',
+  'Expire pela boca, lentamente'
+];
 
 // ===== POPULATE GULP SCREEN =====
 function populateGulp(gulpNum) {
-  const prefix = 'agua-gulp' + gulpNum;
-  const variation = aguaVariacao || 'agua_gelada';
-  const instr = GULP_INSTRUCTIONS[gulpNum][variation];
+  var prefix = 'agua-gulp' + gulpNum;
+  var variation = aguaVariacao || 'agua_gelada';
+  var instr = GULP_INSTRUCTIONS[gulpNum][variation];
 
-  const badge = document.getElementById(prefix + '-badge');
-  const emoji = document.getElementById(prefix + '-emoji');
-  const title = document.getElementById(prefix + '-title');
-  const body  = document.getElementById(prefix + '-body');
-  const encourage = document.getElementById(prefix + '-encourage');
+  var badge = document.getElementById(prefix + '-badge');
+  var emoji = document.getElementById(prefix + '-emoji');
+  var title = document.getElementById(prefix + '-title');
+  var body  = document.getElementById(prefix + '-body');
+  var encourage = document.getElementById(prefix + '-encourage');
 
   if (badge) badge.textContent = GULP_BADGES[gulpNum];
   if (emoji) emoji.textContent = VARIATION_EMOJIS[variation];
@@ -117,21 +105,17 @@ function mostrarStep(stepIndex) {
     target.classList.add('active');
   }
 
-  // Update rail
-  var railId = STEP_IDS[stepIndex].replace('agua-step-', 'agua-rail-');
-  renderRail(railId, stepIndex);
-
   // Populate gulp content
-  if (stepIndex === 2) populateGulp(1);
-  if (stepIndex === 4) populateGulp(2);
-  if (stepIndex === 6) populateGulp(3);
+  if (stepIndex === 1) populateGulp(1);
+  if (stepIndex === 3) populateGulp(2);
+  if (stepIndex === 5) populateGulp(3);
 
   // Start breathing when entering breath steps
-  if (stepIndex === 3) startBreathing(1);
-  if (stepIndex === 5) startBreathing(2);
+  if (stepIndex === 2) startBreathing(1);
+  if (stepIndex === 4) startBreathing(2);
 }
 
-// ===== BREATHING TIMER =====
+// ===== BREATHING TIMER (redesigned with instructions + remaining time) =====
 var BREATH_CIRCUMFERENCE = 339.29; // 2 * π * 54
 var BREATH_PHASES = [
   { label: 'Inspire', duration: 4, phaseIndex: 0 },
@@ -141,7 +125,10 @@ var BREATH_PHASES = [
 var BREATH_CYCLES = 2;
 
 function clearBreathTimers() {
-  aguaBreathTimers.forEach(function(t) { clearTimeout(t); });
+  aguaBreathTimers.forEach(function(t) {
+    clearTimeout(t);
+    clearInterval(t);
+  });
   aguaBreathTimers = [];
 }
 
@@ -153,6 +140,8 @@ function startBreathing(breathNum) {
   var labelEl = document.getElementById('agua-breath' + breathNum + '-label');
   var cycleEl = document.getElementById('agua-breath' + breathNum + '-cycle');
   var phasesEl = document.getElementById('agua-breath' + breathNum + '-phases');
+  var instructionEl = document.getElementById('agua-breath' + breathNum + '-instruction');
+  var remainingEl = document.getElementById('agua-breath' + breathNum + '-remaining');
 
   if (!ring || !countdown || !labelEl) return;
 
@@ -176,6 +165,17 @@ function startBreathing(breathNum) {
     });
   }
 
+  function updateInstruction(phaseIndex) {
+    if (!instructionEl) return;
+    instructionEl.textContent = BREATH_PHASE_INSTRUCTIONS[phaseIndex] || '';
+  }
+
+  function updateRemaining(elapsedMs) {
+    if (!remainingEl) return;
+    var remainingSec = Math.ceil((totalDurationMs - elapsedMs) / 1000);
+    remainingEl.textContent = '~' + remainingSec + 's restantes';
+  }
+
   var tickInterval = 100;
   var tickTimer;
 
@@ -183,13 +183,15 @@ function startBreathing(breathNum) {
     totalElapsedMs += tickInterval;
     if (totalElapsedMs >= totalDurationMs) {
       clearInterval(tickTimer);
-      countdown.textContent = '✓';
+      countdown.textContent = '\u2713';
       labelEl.textContent = 'Concluído';
       ring.style.strokeDashoffset = String(BREATH_CIRCUMFERENCE);
       updatePhasePills(-1);
+      if (instructionEl) instructionEl.textContent = 'Respiração concluída!';
+      if (remainingEl) remainingEl.textContent = '';
       // Auto-advance after 1.5s
       var advTimer = setTimeout(function() {
-        var nextStep = breathNum === 1 ? 4 : 6;
+        var nextStep = breathNum === 1 ? 3 : 5;
         mostrarStep(nextStep);
       }, 1500);
       aguaBreathTimers.push(advTimer);
@@ -215,11 +217,13 @@ function startBreathing(breathNum) {
       phaseElapsed -= BREATH_PHASES[i].duration * 1000;
     }
 
-    // Countdown seconds remaining
+    // Countdown seconds remaining in current phase
     var secsRemaining = Math.ceil((currentPhase.duration * 1000 - phaseElapsed) / 1000);
     countdown.textContent = String(secsRemaining);
     labelEl.textContent = currentPhase.label;
     updatePhasePills(currentPhase.phaseIndex);
+    updateInstruction(currentPhase.phaseIndex);
+    updateRemaining(totalElapsedMs);
 
     // Ring animation
     var fraction = totalElapsedMs / totalDurationMs;
@@ -229,6 +233,8 @@ function startBreathing(breathNum) {
   // Initial state
   if (cycleEl) cycleEl.textContent = 'Ciclo 1 de ' + BREATH_CYCLES;
   updatePhasePills(0);
+  updateInstruction(0);
+  updateRemaining(0);
   countdown.textContent = '4';
   labelEl.textContent = 'Inspire';
 
@@ -238,7 +244,7 @@ function startBreathing(breathNum) {
 
 function skipBreathing(breathNum) {
   clearBreathTimers();
-  var nextStep = breathNum === 1 ? 4 : 6;
+  var nextStep = breathNum === 1 ? 3 : 5;
   mostrarStep(nextStep);
 }
 
@@ -297,7 +303,7 @@ async function aguaRegistrarFissura(intensidade) {
     if (doneBody) doneBody.innerHTML = 'Tentar outra atividade pode ajudar.<br>Cada tentativa conta.';
   }
 
-  mostrarStep(8);
+  mostrarStep(7);
 }
 
 // ===== PUBLIC FUNCTIONS =====
@@ -339,44 +345,40 @@ window.aguaRegistrarFissura = aguaRegistrarFissura;
 
 // ===== EVENT LISTENERS =====
 (function wireEvents() {
-  // Intro → Choose
-  var btnStart = document.getElementById('agua-btn-start');
-  if (btnStart) btnStart.addEventListener('click', function() { mostrarStep(1); });
-
-  // Choose options → Gulp 1
+  // Choose options → Gulp 1 (no separate intro button, choosing starts exercise)
   document.querySelectorAll('#screen-agua .agua-option').forEach(function(btn) {
     btn.addEventListener('click', function() {
       aguaVariacao = btn.getAttribute('data-variation');
-      mostrarStep(2);
+      mostrarStep(1); // Go directly to first gulp
     });
   });
 
-  // Gulp buttons
+  // Gulp buttons → go to next breath or checkin
   var btnGulp1 = document.getElementById('agua-btn-gulp1');
-  if (btnGulp1) btnGulp1.addEventListener('click', function() { mostrarStep(3); });
+  if (btnGulp1) btnGulp1.addEventListener('click', function() { mostrarStep(2); }); // → breath1
 
   var btnGulp2 = document.getElementById('agua-btn-gulp2');
-  if (btnGulp2) btnGulp2.addEventListener('click', function() { mostrarStep(5); });
+  if (btnGulp2) btnGulp2.addEventListener('click', function() { mostrarStep(4); }); // → breath2
 
   var btnGulp3 = document.getElementById('agua-btn-gulp3');
-  if (btnGulp3) btnGulp3.addEventListener('click', function() { mostrarStep(7); });
+  if (btnGulp3) btnGulp3.addEventListener('click', function() { mostrarStep(6); }); // → checkin
 
-  // Skip gulp buttons
+  // Skip gulp buttons → skip to next breath or checkin (same logic)
   var skipGulp1 = document.getElementById('agua-skip-gulp1');
-  if (skipGulp1) skipGulp1.addEventListener('click', function() { mostrarStep(4); });
+  if (skipGulp1) skipGulp1.addEventListener('click', function() { mostrarStep(2); }); // → breath1
 
   var skipGulp2 = document.getElementById('agua-skip-gulp2');
-  if (skipGulp2) skipGulp2.addEventListener('click', function() { mostrarStep(6); });
+  if (skipGulp2) skipGulp2.addEventListener('click', function() { mostrarStep(4); }); // → breath2
 
   var skipGulp3 = document.getElementById('agua-skip-gulp3');
-  if (skipGulp3) skipGulp3.addEventListener('click', function() { mostrarStep(7); });
+  if (skipGulp3) skipGulp3.addEventListener('click', function() { mostrarStep(6); }); // → checkin
 
-  // Skip breath buttons
+  // Skip breath buttons → skip to next gulp
   var skipBreath1 = document.getElementById('agua-skip-breath1');
-  if (skipBreath1) skipBreath1.addEventListener('click', function() { skipBreathing(1); });
+  if (skipBreath1) skipBreath1.addEventListener('click', function() { skipBreathing(1); }); // → gulp2
 
   var skipBreath2 = document.getElementById('agua-skip-breath2');
-  if (skipBreath2) skipBreath2.addEventListener('click', function() { skipBreathing(2); });
+  if (skipBreath2) skipBreath2.addEventListener('click', function() { skipBreathing(2); }); // → gulp3
 
   // Check-in buttons
   document.querySelectorAll('#screen-agua .agua-checkin-btn').forEach(function(btn) {
@@ -393,7 +395,5 @@ window.aguaRegistrarFissura = aguaRegistrarFissura;
   var btnOther = document.getElementById('agua-btn-other-strategies');
   if (btnOther) btnOther.addEventListener('click', function() { aguaSairParaEstrategias(); });
 
-  // Back button in header
-  var btnSair = document.getElementById('btn-agua-sair');
-  if (btnSair) btnSair.addEventListener('click', function() { aguaSairParaEstrategias(); });
+  // Note: btn-agua-sair is handled by app.js to avoid duplicate listeners
 })();
