@@ -362,11 +362,19 @@ function abrirLicao(idx, user) {
   const l = lessons[idx];
   const completed = isCompleted(l.id);
 
-  // Esconde lista, mostra detalhe
-  document.getElementById('screen-lessons').classList.remove('active');
-  document.getElementById('screen-lessons').style.display = 'none';
+  // Esconde lista, mostra detalhe (inline styles necessário pois .screen tem !important)
+  const lessonsScreen = document.getElementById('screen-lessons');
+  lessonsScreen.classList.remove('active');
+  lessonsScreen.style.display = 'none';
+  lessonsScreen.style.visibility = 'hidden';
+  lessonsScreen.style.opacity = '0';
+  lessonsScreen.style.pointerEvents = 'none';
   const detail = document.getElementById('screen-lesson-detail');
   detail.classList.add('active');
+  detail.style.display = 'block';
+  detail.style.visibility = 'visible';
+  detail.style.opacity = '1';
+  detail.style.pointerEvents = 'auto';
 
   // Monta conteúdo
   let html = `
@@ -557,8 +565,16 @@ function abrirLicao(idx, user) {
 function fecharDetalhe(user) {
   const detail = document.getElementById('screen-lesson-detail');
   detail.classList.remove('active');
+  detail.style.display = 'none';
+  detail.style.visibility = 'hidden';
+  detail.style.opacity = '0';
+  detail.style.pointerEvents = 'none';
   const lessonsScreen = document.getElementById('screen-lessons');
   lessonsScreen.classList.add('active');
+  lessonsScreen.style.display = 'block';
+  lessonsScreen.style.visibility = 'visible';
+  lessonsScreen.style.opacity = '1';
+  lessonsScreen.style.pointerEvents = 'auto';
 }
 
 // ===== ABRIR ESTRATÉGIA A PARTIR DA LIÇÃO =====
