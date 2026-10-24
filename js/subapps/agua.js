@@ -363,12 +363,12 @@ window.aguaRegistrarFissura = aguaRegistrarFissura;
   var btnGulp3 = document.getElementById('agua-btn-gulp3');
   if (btnGulp3) btnGulp3.addEventListener('click', function() { mostrarStep(6); }); // → checkin
 
-  // Skip gulp buttons → skip to next breath or checkin (same logic)
+  // Skip gulp buttons → skip to NEXT GULP (skip breath too, since user didn't drink)
   var skipGulp1 = document.getElementById('agua-skip-gulp1');
-  if (skipGulp1) skipGulp1.addEventListener('click', function() { mostrarStep(2); }); // → breath1
+  if (skipGulp1) skipGulp1.addEventListener('click', function() { mostrarStep(3); }); // → gulp2 (skip breath1)
 
   var skipGulp2 = document.getElementById('agua-skip-gulp2');
-  if (skipGulp2) skipGulp2.addEventListener('click', function() { mostrarStep(4); }); // → breath2
+  if (skipGulp2) skipGulp2.addEventListener('click', function() { mostrarStep(5); }); // → gulp3 (skip breath2)
 
   var skipGulp3 = document.getElementById('agua-skip-gulp3');
   if (skipGulp3) skipGulp3.addEventListener('click', function() { mostrarStep(6); }); // → checkin
