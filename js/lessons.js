@@ -363,12 +363,10 @@ function abrirLicao(idx, user) {
   const completed = isCompleted(l.id);
 
   // Esconde lista, mostra detalhe
+  document.getElementById('screen-lessons').classList.remove('active');
   document.getElementById('screen-lessons').style.display = 'none';
   const detail = document.getElementById('screen-lesson-detail');
-  detail.style.display = 'block';
-  detail.style.visibility = 'visible';
-  detail.style.opacity = '1';
-  detail.style.pointerEvents = 'auto';
+  detail.classList.add('active');
 
   // Monta conteúdo
   let html = `
@@ -544,7 +542,6 @@ function abrirLicao(idx, user) {
     fecharDetalhe(user);
     // Re-renderiza a lista para atualizar progresso
     await carregarLessons(user);
-    document.getElementById('screen-lessons').style.display = 'block';
   });
 
   // Próxima lição
@@ -559,11 +556,9 @@ function abrirLicao(idx, user) {
 
 function fecharDetalhe(user) {
   const detail = document.getElementById('screen-lesson-detail');
-  detail.style.display = 'none';
-  detail.style.visibility = 'hidden';
-  detail.style.opacity = '0';
-  detail.style.pointerEvents = 'none';
-  document.getElementById('screen-lessons').style.display = 'block';
+  detail.classList.remove('active');
+  const lessonsScreen = document.getElementById('screen-lessons');
+  lessonsScreen.classList.add('active');
 }
 
 // ===== ABRIR ESTRATÉGIA A PARTIR DA LIÇÃO =====
