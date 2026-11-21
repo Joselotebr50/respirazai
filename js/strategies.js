@@ -173,21 +173,116 @@ document.querySelectorAll('.estrategia-btn-fumou').forEach(btn => {
   });
 });
 
-// ===== ADIAR 5 MIN: CRONÔMETRO REGRESSIVO =====
+// ===== ADIAR 5 MIN: MODO ONDA (fissura sobe, pica e desce) =====
 const ADIAR_DURATION_S = 300; // 5 minutos
 const ADIAR_CIRCUMFERENCE = 339.29;
 let adiarTimerInterval = null;
+let adiarFaseAtual = -1;
 
-const ADIAR_MOTIVACOES = [
-  'A fissura já está diminuindo.',
-  'Respire fundo. Você está no controle.',
-  'Cada segundo sem fumar é uma vitória.',
-  'A vontade passa. Você permanece.',
-  'Faltam poucos minutos. Continue forte!',
-  'Seu corpo está agradecendo.',
-  'A fissura perde força a cada momento.',
-  'Você é mais forte que a vontade.',
+// Fases da onda: [fimEmMs, classe, mensagem, cor do anel, índice do marco]
+// A fissura (onda) sobe até ~40% do tempo (pico), depois desce.
+const ADIAR_FASES = [
+  { ate: 0,     classe: 'fase-subida',  marco: 0,
+    msg: 'A onda está subindo. Respire fundo e permaneça aqui.',
+    ring: '#fbbf24' },
+  { ate: 90000, classe: 'fase-subida',  marco: 1,
+    msg: 'Subindo... desconfortável, mas normal. É só temporário.',
+    ring: '#fbbf24' },
+  { ate: 150000, classe: 'fase-pico',   marco: 2,
+    msg: '🌊 PICO DA ONDA — o momento mais difícil. Daqui pra frente só desce!',
+    ring: '#f87171' },
+  { ate: 240000, classe: 'fase-descida', marco: 3,
+    msg: 'A onda já está descendo. Mais rápido do que você imaginava, né?',
+    ring: '#4fd1f0' },
+  { ate: 300000, classe: 'fase-vitoria', marco: 4,
+    msg: 'Quase na calmaria... aguenta firme!',
+    ring: '#4fd1f0' },
 ];
+const ADIAR_FASE_INICIO = {
+  classe: 'fase-subida',
+  msg: 'A onda está prestes a subir. Toque em começar quando estiver pronto.',
+  ring: '#4fd1f0',
+};
+const ADIAR_VITORIA = {
+  msg: '🏆 A onda passou! Você surfou a fissura inteira. Ela sempre passa.',
+  ring: '#22c55e',
+};
+
+// Curva da fissura: sobe rápido até o pico (~40% do tempo), desce devagar.
+// Retorna altura da onda em % (5% a 92%).
+function adiarAlturaOnda(elapsedMs) {
+  const total = ADIAR_DURATION_S * 1000;
+  const t = Math.min(elapsedMs / total, 1);
+  const PICO = 0.4; // pico em 40% do tempo (2 min)
+  if (t <= PICO) {
+    // subida com leve aceleração (easeInQuad)
+    const p = t / PICO;
+    return 12 + (92 - 12) * p * p;
+  }
+  // descida suave (easeOutCubic) — a fissura vai embora devagar
+  const p = (t - PICO) / (1 - PICO);
+  const queda = 1 - Math.pow(1 - p, 3);
+  return 92 - (92 - 6) * queda;
+}
+
+function adiarAplicarFase(faseIdx, fase) {
+  if (adiarFaseAtual === faseIdx) return;
+  adiarFaseAtual = faseIdx;
+
+  const waveBox = document.getElementById('adiar-wave-box');
+  const faseMsg = document.getElementById('adiar-fase-msg');
+  const faseText = document.getElementById('adiar-fase-text');
+  const marcos = document.getElementById('adiar-marcos');
+  const ring = document.getElementById('adiar-timer-ring');
+  const labelEl = document.getElementById('adiar-timer-label');
+
+  // classes de fase
+  ['fase-subida', 'fase-pico', 'fase-descida', 'fase-vitoria'].forEach(c => {
+    if (waveBox) waveBox.classList.remove(c);
+    if (faseMsg) faseMsg.classList.remove(c);
+    if (marcos) marcos.classList.remove(c);
+  });
+  if (waveBox) waveBox.classList.add(fase.classe);
+  if (faseMsg) faseMsg.classList.add(fase.classe);
+  if (marcos) marcos.classList.add(fase.classe);
+
+  // mensagem da fase
+  if (faseText) faseText.textContent = fase.msg;
+  if (labelEl) labelEl.textContent = fase.classe === 'fase-pico' ? 'Pico da onda' : 'Surfando...';
+
+  // cor do anel
+  if (ring) ring.style.stroke = fase.ring;
+
+  // marcos: marca anteriores como completos, atual como ativo
+  if (marcos) {
+    marcos.querySelectorAll('.adiar-marco').forEach(m => {
+      const idx = parseInt(m.dataset.marco);
+      m.classList.toggle('completo', idx < fase.marco);
+      m.classList.toggle('ativo', idx === fase.marco);
+    });
+  }
+
+  // vibração curta ao entrar na fase (se suportado)
+  if (navigator.vibrate) navigator.vibrate(fase.classe === 'fase-pico' ? [80, 60, 80] : 60);
+}
+
+function adiarConfete() {
+  const container = document.getElementById('adiar-confetti');
+  if (!container) return;
+  const cores = ['#fbbf24', '#4fd1f0', '#22c55e', '#f87171', '#a78bfa', '#f472b6'];
+  container.innerHTML = '';
+  for (let i = 0; i < 36; i++) {
+    const p = document.createElement('div');
+    p.className = 'adiar-confetti-piece';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = cores[i % cores.length];
+    p.style.animationDelay = (Math.random() * 0.8) + 's';
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    container.appendChild(p);
+  }
+  // limpa após a animação
+  setTimeout(() => { container.innerHTML = ''; }, 4000);
+}
 
 function adiarIniciarTimer() {
   if (adiarTimerInterval) { clearInterval(adiarTimerInterval); adiarTimerInterval = null; }
@@ -195,26 +290,24 @@ function adiarIniciarTimer() {
   const ring = document.getElementById('adiar-timer-ring');
   const countdownEl = document.getElementById('adiar-timer-countdown');
   const labelEl = document.getElementById('adiar-timer-label');
-  const motivacaoEl = document.getElementById('adiar-motivacao');
   const buttonsEl = document.getElementById('adiar-timer-buttons');
+  const waveFill = document.getElementById('adiar-wave-fill');
+  const waveLabel = document.getElementById('adiar-wave-label');
   if (!ring || !countdownEl) return;
 
   let elapsed = 0;
-  let motivIndex = 0;
   const totalMs = ADIAR_DURATION_S * 1000;
   const tickMs = 200;
 
-  // Show "Adiar mais" button
-  buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-mais">Adiar mais 5 min</button>';
-  var btnMais = document.getElementById('adiar-btn-mais');
-  if (btnMais) btnMais.addEventListener('click', function() {
-    elapsed = 0; // reset to start
-    motivIndex = 0;
-    if (motivacaoEl) motivacaoEl.textContent = ADIAR_MOTIVACOES[0];
-  });
-
-  if (labelEl) labelEl.textContent = 'Esperando...';
-  if (motivacaoEl) motivacaoEl.textContent = ADIAR_MOTIVACOES[0];
+  // estado inicial: fase 0
+  adiarFaseAtual = -1;
+  adiarAplicarFase(0, ADIAR_FASES[0]);
+  if (waveLabel) waveLabel.textContent = 'Surfe a onda — ela vai passar';
+  if (buttonsEl) {
+    buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-mais">↺ Reiniciar onda</button>';
+    var btnMais = document.getElementById('adiar-btn-mais');
+    if (btnMais) btnMais.addEventListener('click', function() { adiarIniciarTimer(); });
+  }
 
   adiarTimerInterval = setInterval(function() {
     elapsed += tickMs;
@@ -222,34 +315,41 @@ function adiarIniciarTimer() {
       clearInterval(adiarTimerInterval);
       adiarTimerInterval = null;
       countdownEl.textContent = '0:00';
-      if (labelEl) labelEl.textContent = 'Tempo esgotado!';
-      if (motivacaoEl) motivacaoEl.textContent = 'Você conseguiu! A fissura já passou.';
-      ring.style.strokeDashoffset = String(ADIAR_CIRCUMFERENCE);
-      buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-mais">Adiar mais 5 min</button>';
-      var btnMais2 = document.getElementById('adiar-btn-mais');
-      if (btnMais2) btnMais2.addEventListener('click', function() {
-        elapsed = 0;
-        motivIndex = 0;
-        adiarIniciarTimer();
-      });
+      if (labelEl) labelEl.textContent = 'Onda vencida!';
+      if (ring) ring.style.strokeDashoffset = String(ADIAR_CIRCUMFERENCE);
+      if (ring) ring.style.stroke = ADIAR_VITORIA.ring;
+      if (waveFill) waveFill.style.height = '6%';
+      // vitória: mensagem, classes, confete, vibração longa
+      adiarAplicarFase(ADIAR_FASES.length, { classe: 'fase-vitoria', marco: 5, msg: ADIAR_VITORIA.msg, ring: ADIAR_VITORIA.ring });
+      adiarConfete();
+      if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 200]);
+      if (buttonsEl) {
+        buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-mais">🌊 Adiar mais 5 min</button>';
+        var btnMais = document.getElementById('adiar-btn-mais');
+        if (btnMais) btnMais.addEventListener('click', function() { adiarIniciarTimer(); });
+      }
       return;
     }
 
-    // Update countdown
+    // countdown
     var remaining = Math.ceil((totalMs - elapsed) / 1000);
     var min = Math.floor(remaining / 60);
     var sec = remaining % 60;
     countdownEl.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
 
-    // Update ring
+    // anel
     var fraction = elapsed / totalMs;
     ring.style.strokeDashoffset = String(ADIAR_CIRCUMFERENCE * fraction);
 
-    // Rotate motivation every 30s
-    var newMotivIndex = Math.floor(elapsed / 30000) % ADIAR_MOTIVACOES.length;
-    if (newMotivIndex !== motivIndex) {
-      motivIndex = newMotivIndex;
-      if (motivacaoEl) motivacaoEl.textContent = ADIAR_MOTIVACOES[motivIndex];
+    // altura da onda
+    if (waveFill) waveFill.style.height = adiarAlturaOnda(elapsed) + '%';
+
+    // fase atual
+    for (var i = 0; i < ADIAR_FASES.length; i++) {
+      if (elapsed < ADIAR_FASES[i].ate || i === ADIAR_FASES.length - 1) {
+        adiarAplicarFase(i, ADIAR_FASES[i]);
+        break;
+      }
     }
   }, tickMs);
 }
@@ -265,10 +365,32 @@ function adiarReset() {
   var countdown = document.getElementById('adiar-timer-countdown');
   var label = document.getElementById('adiar-timer-label');
   var buttons = document.getElementById('adiar-timer-buttons');
-  if (ring) ring.style.strokeDashoffset = '0';
+  var waveFill = document.getElementById('adiar-wave-fill');
+  var waveLabel = document.getElementById('adiar-wave-label');
+  var faseText = document.getElementById('adiar-fase-text');
+  var faseMsg = document.getElementById('adiar-fase-msg');
+  var waveBox = document.getElementById('adiar-wave-box');
+  var marcos = document.getElementById('adiar-marcos');
+  var confetti = document.getElementById('adiar-confetti');
+
+  adiarFaseAtual = -1;
+  if (ring) { ring.style.strokeDashoffset = '0'; ring.style.stroke = ADIAR_FASE_INICIO.ring; }
   if (countdown) countdown.textContent = '5:00';
-  if (label) label.textContent = 'Esperando...';
-  if (buttons) buttons.innerHTML = '<button class="btn btn-primary btn-sm" id="adiar-btn-start">Iniciar cronômetro</button>';
+  if (label) label.textContent = 'Pronto para começar';
+  if (waveFill) waveFill.style.height = '12%';
+  if (waveLabel) waveLabel.textContent = 'Toque em iniciar e surfe a onda';
+  if (faseText) faseText.textContent = ADIAR_FASE_INICIO.msg;
+  if (faseMsg) { faseMsg.classList.remove('fase-pico', 'fase-descida', 'fase-vitoria'); faseMsg.classList.add('fase-subida'); }
+  if (waveBox) { waveBox.classList.remove('fase-pico', 'fase-descida', 'fase-vitoria'); waveBox.classList.add('fase-subida'); }
+  if (marcos) {
+    marcos.classList.remove('fase-pico', 'fase-descida', 'fase-vitoria');
+    marcos.querySelectorAll('.adiar-marco').forEach(m => {
+      m.classList.remove('completo');
+      m.classList.toggle('ativo', m.dataset.marco === '0');
+    });
+  }
+  if (confetti) confetti.innerHTML = '';
+  if (buttons) buttons.innerHTML = '<button class="btn btn-primary btn-sm" id="adiar-btn-start">🌊 Começar a surfar</button>';
   var btn = document.getElementById('adiar-btn-start');
   if (btn) btn.addEventListener('click', adiarIniciarTimer);
 }
