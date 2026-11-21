@@ -208,12 +208,12 @@ const ADIAR_VITORIA = {
   ring: '#22c55e',
 };
 
-// Curva da fissura: sobe rápido até o pico (~40% do tempo), desce devagar.
-// Retorna altura da onda em % (5% a 92%).
+// Curva da fissura: sobe até o pico (50% do tempo = 2:30), desce devagar.
+// Retorna altura da onda em % (6% a 92%).
 function adiarAlturaOnda(elapsedMs) {
   const total = ADIAR_DURATION_S * 1000;
   const t = Math.min(elapsedMs / total, 1);
-  const PICO = 0.4; // pico em 40% do tempo (2 min)
+  const PICO = 0.5; // pico em 2:30 — alinhado com o marco da fase
   if (t <= PICO) {
     // subida com leve aceleração (easeInQuad)
     const p = t / PICO;
