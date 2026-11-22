@@ -507,91 +507,84 @@
       display: block; margin: 8px auto 0; max-width: 360px;
     }
 
-    /* ===== ADIAR 5 MIN: MODO ONDA ===== */
-    .adiar-wave-box {
-      position: relative; height: 150px; max-width: 360px; margin: 0 auto;
-      border-radius: 20px; overflow: hidden;
-      border: 1px solid var(--borda);
-      background: linear-gradient(180deg, rgba(10,20,32,0.3), rgba(16,31,51,0.6));
-    }
-    .adiar-wave-fill {
-      position: absolute; left: 0; right: 0; bottom: 0;
-      height: 12%; /* JS controla a altura (onda subindo/descendo) */
-      transition: height 0.5s ease;
-    }
-    .adiar-wave-svg {
-      position: absolute; top: -18px; left: 0; width: 200%; height: 20px;
-      animation: adiarWaveMove 3s linear infinite;
-    }
-    .adiar-wave-svg path { transition: fill 0.8s ease; }
-    @keyframes adiarWaveMove {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
-    }
-    .adiar-surfer {
-      position: absolute; top: -34px; left: 50%; font-size: 30px;
-      transform: translateX(-50%);
-      animation: adiarSurferBob 2.2s ease-in-out infinite;
-    }
-    @keyframes adiarSurferBob {
-      0%, 100% { transform: translateX(-50%) translateY(0) rotate(-4deg); }
-      50% { transform: translateX(-50%) translateY(-6px) rotate(4deg); }
-    }
-    .adiar-wave-label {
-      position: absolute; top: 12px; left: 0; right: 0; text-align: center;
-      font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 500;
-      pointer-events: none; padding: 0 16px;
-    }
-    .adiar-wave-box.fase-subida #adiar-wave-fill { background: linear-gradient(180deg, rgba(245,158,11,0.25), rgba(245,158,11,0.45)); }
-    .adiar-wave-box.fase-subida .adiar-wave-svg path { fill: rgba(245,158,11,0.4); }
-    .adiar-wave-box.fase-pico #adiar-wave-fill { background: linear-gradient(180deg, rgba(239,68,68,0.25), rgba(239,68,68,0.5)); }
-    .adiar-wave-box.fase-pico .adiar-wave-svg path { fill: rgba(239,68,68,0.45); }
-    .adiar-wave-box.fase-pico .adiar-wave-svg { animation-duration: 1.6s; }
-    .adiar-wave-box.fase-descida #adiar-wave-fill { background: linear-gradient(180deg, rgba(79,209,240,0.25), rgba(79,209,240,0.45)); }
-    .adiar-wave-box.fase-descida .adiar-wave-svg path { fill: rgba(79,209,240,0.4); }
-    .adiar-wave-box.fase-descida .adiar-wave-svg { animation-duration: 4s; }
-    .adiar-wave-box.fase-vitoria #adiar-wave-fill { background: linear-gradient(180deg, rgba(34,197,94,0.22), rgba(34,197,94,0.4)); }
-    .adiar-wave-box.fase-vitoria .adiar-wave-svg path { fill: rgba(34,197,94,0.35); }
-    .adiar-wave-box.fase-vitoria .adiar-wave-svg { animation-duration: 5s; }
-
-    /* Mensagem de fase */
-    .adiar-fase-msg {
-      max-width: 360px; margin: 14px auto 0;
-      background: var(--bg-card); border: 1px solid var(--borda);
-      border-radius: 14px; padding: 12px 16px;
-    }
-    .adiar-fase-msg span {
-      font-size: 15px; line-height: 1.55; color: var(--texto-principal);
-      display: block; text-align: center; font-weight: 500;
-      transition: opacity 0.3s ease;
-    }
-    .adiar-fase-msg.fase-subida span { color: #fbbf24; }
-    .adiar-fase-msg.fase-pico span { color: #f87171; }
-    .adiar-fase-msg.fase-descida span { color: #4fd1f0; }
-    .adiar-fase-msg.fase-vitoria span { color: #22c55e; }
-
-    /* Marcos das fases */
+    /* ===== ADIAR 5 MIN: TÉCNICA 5-4-3-2-1 ===== */
     .adiar-marcos {
       display: flex; justify-content: center; gap: 6px;
-      margin-top: 14px; max-width: 360px;
+      margin-top: 14px; max-width: 380px; margin-left: auto; margin-right: auto;
     }
     .adiar-marco {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 7px 2px 5px; border-radius: 12px;
+      background: rgba(255,255,255,0.06); border: 1px solid transparent;
+      transition: all 0.3s ease;
     }
-    .adiar-marco-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: rgba(255,255,255,0.15); transition: all 0.4s ease;
-    }
+    .adiar-marco-emoji { font-size: 19px; filter: grayscale(1) opacity(0.4); transition: all 0.3s; }
     .adiar-marco-t { font-size: 10px; color: var(--texto-fraco); }
-    .adiar-marco.ativo .adiar-marco-dot {
-      background: var(--cor-secundaria); box-shadow: 0 0 8px rgba(79,209,240,0.6);
-      transform: scale(1.25);
-    }
-    .adiar-marco.completo .adiar-marco-dot { background: #22c55e; }
+    .adiar-marco.ativo { background: rgba(79,209,240,0.12); border-color: rgba(79,209,240,0.45); }
+    .adiar-marco.ativo .adiar-marco-emoji { filter: none; transform: scale(1.18); }
+    .adiar-marco.completo { background: rgba(34,197,94,0.12); }
+    .adiar-marco.completo .adiar-marco-emoji { filter: none; }
     .adiar-marco.completo .adiar-marco-t { color: #22c55e; }
-    .adiar-marcos.fase-subida .adiar-marco.ativo .adiar-marco-dot { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.6); }
-    .adiar-marcos.fase-pico .adiar-marco.ativo .adiar-marco-dot { background: #f87171; box-shadow: 0 0 8px rgba(248,113,113,0.6); }
-    .adiar-marcos.fase-vitoria .adiar-marco.completo .adiar-marco-dot { background: #22c55e; }
+
+    .adiar-54321-stage { max-width: 380px; margin: 14px auto 0; }
+    .adiar-intro-card {
+      background: var(--bg-card); border: 1px solid var(--borda); border-radius: 16px;
+      padding: 14px 18px; text-align: center;
+    }
+    .adiar-intro-card p { font-size: 14px; color: var(--texto-medio); line-height: 1.6; margin: 0; }
+
+    .adiar-step-card {
+      background: var(--bg-card); border: 1px solid var(--borda);
+      border-radius: 18px; padding: 18px 16px 14px; text-align: left;
+      animation: adiarStepIn 0.35s ease;
+    }
+    @keyframes adiarStepIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .adiar-step-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .adiar-step-emoji { font-size: 34px; }
+    .adiar-step-count { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--texto-fraco); }
+    .adiar-step-title { font-size: 18px; font-weight: 700; color: var(--texto-principal); line-height: 1.3; }
+    .adiar-step-prompt { font-size: 14px; color: var(--texto-medio); line-height: 1.55; margin: 0 0 12px; }
+    .adiar-input {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg-thumb); border: 1px solid var(--borda); border-radius: 12px;
+      padding: 11px 14px; font-size: 16px; color: var(--texto-principal);
+      margin-bottom: 8px; outline: none; transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    .adiar-input:focus { border-color: var(--cor-secundaria); }
+    .adiar-input::placeholder { color: var(--texto-fraco); }
+    .adiar-btn-pronto {
+      width: 100%; margin-top: 6px; padding: 12px; border-radius: 14px;
+      background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.4);
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .adiar-btn-pronto:active { transform: scale(0.98); }
+    .adiar-step-exemplos { font-size: 12px; color: var(--texto-fraco); margin: 10px 0 0; line-height: 1.5; }
+
+    .adiar-waiting-card {
+      background: var(--bg-card); border: 1px solid var(--borda); border-radius: 18px;
+      padding: 24px 18px; text-align: center; animation: adiarStepIn 0.35s ease;
+    }
+    .adiar-waiting-emoji { font-size: 30px; margin-bottom: 8px; }
+    .adiar-waiting-title { font-size: 16px; font-weight: 700; color: #22c55e; margin-bottom: 8px; }
+    .adiar-waiting-sub { font-size: 13px; color: var(--texto-medio); line-height: 1.55; margin: 0; }
+    .adiar-waiting-next { font-size: 22px; font-weight: 700; color: var(--cor-secundaria); margin-top: 10px; }
+    .adiar-pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--cor-secundaria); margin: 14px auto 0; animation: adiarPulse 2s ease-in-out infinite; }
+    @keyframes adiarPulse { 0%,100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.5); opacity: 1; } }
+
+    .adiar-recap { margin-top: 14px; text-align: left; }
+    .adiar-recap-item { display: flex; align-items: baseline; gap: 8px; font-size: 13px; color: var(--texto-medio); margin-bottom: 6px; line-height: 1.4; }
+    .adiar-recap-item b { color: var(--texto-principal); font-weight: 600; white-space: nowrap; }
+
+    .adiar-vitoria-card {
+      background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4);
+      border-radius: 18px; padding: 22px 18px; text-align: center; animation: adiarStepIn 0.35s ease;
+    }
+    .adiar-vitoria-emoji { font-size: 40px; margin-bottom: 8px; }
+    .adiar-vitoria-title { font-size: 20px; font-weight: 700; color: #22c55e; margin-bottom: 6px; }
+    .adiar-vitoria-sub { font-size: 14px; color: var(--texto-medio); line-height: 1.55; margin: 0; }
+    .adiar-vitoria-hist { font-size: 12px; color: var(--texto-fraco); margin-top: 12px; }
 
     /* Confete de vitória */
     .adiar-confetti {
@@ -1344,50 +1337,39 @@
       <h2 style="font-size:18px;">⏳ Adiar por 5 min</h2>
       <button class="logout-btn btn-estrategia-voltar">Voltar</button>
     </div>
-    <p class="estrategia-dica">A fissura é como uma onda: sobe, atinge o pico e desce. Sobreviva aos 5 minutos acompanhando a onda — ela sempre passa.</p>
-
-    <!-- MODO ONDA: visual da fissura subindo e descendo -->
-    <div id="adiar-wave-box" class="adiar-wave-box">
-      <div id="adiar-wave-fill" class="adiar-wave-fill">
-        <svg class="adiar-wave-svg" viewBox="0 0 400 40" preserveAspectRatio="none">
-          <path id="adiar-wave-path-1" d="M0,20 Q50,0 100,20 T200,20 T300,20 T400,20 V40 H0 Z" fill="rgba(79,209,240,0.35)"/>
-          <path id="adiar-wave-path-2" d="M0,25 Q50,10 100,25 T200,25 T300,25 T400,25 V40 H0 Z" fill="rgba(79,209,240,0.55)"/>
-        </svg>
-        <span class="adiar-surfer" id="adiar-surfer">🏄</span>
-      </div>
-      <span class="adiar-wave-label" id="adiar-wave-label">Toque em iniciar e surfe a onda</span>
-    </div>
+    <p class="estrategia-dica">Técnica 5-4-3-2-1: âncore-se no presente pelos 5 sentidos — 5 coisas que você vê, 4 que ouve, 3 que toca, 2 que cheira e 1 que saboreia. Um sentido por minuto, até a fissura passar.</p>
 
     <!-- Cronômetro regressivo -->
     <div id="adiar-timer-container" style="text-align:center; margin:16px 0;">
-      <div id="adiar-timer-ring-wrap" style="position:relative; width:180px; height:180px; margin:0 auto;">
+      <div id="adiar-timer-ring-wrap" style="position:relative; width:150px; height:150px; margin:0 auto;">
         <svg viewBox="0 0 120 120" style="width:100%;height:100%;">
           <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
-          <circle id="adiar-timer-ring" cx="60" cy="60" r="54" fill="none" stroke="var(--cor-secundaria)" stroke-width="6" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.29" stroke-dashoffset="0" style="transition: stroke 0.8s ease;"/>
+          <circle id="adiar-timer-ring" cx="60" cy="60" r="54" fill="none" stroke="#4fd1f0" stroke-width="6" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.29" stroke-dashoffset="0" style="transition: stroke 0.8s ease;"/>
         </svg>
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;">
-          <span id="adiar-timer-countdown" style="font-size:44px;font-weight:700;color:white;line-height:1;">5:00</span>
-          <span id="adiar-timer-label" style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px;">Pronto para começar</span>
+          <span id="adiar-timer-countdown" style="font-size:38px;font-weight:700;color:white;line-height:1;">5:00</span>
+          <span id="adiar-timer-label" style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px;">Pronto para começar</span>
         </div>
       </div>
 
-      <!-- Mensagem de fase -->
-      <div id="adiar-fase-msg" class="adiar-fase-msg">
-        <span id="adiar-fase-text">A onda está prestes a subir. Quando sentir a fissura, inicie.</span>
-      </div>
-
-      <!-- Marcos das fases -->
+      <!-- Progresso dos sentidos -->
       <div id="adiar-marcos" class="adiar-marcos">
-        <div class="adiar-marco ativo" data-marco="0"><span class="adiar-marco-dot"></span><span class="adiar-marco-t">5:00</span></div>
-        <div class="adiar-marco" data-marco="1"><span class="adiar-marco-dot"></span><span class="adiar-marco-t">3:30</span></div>
-        <div class="adiar-marco" data-marco="2"><span class="adiar-marco-dot"></span><span class="adiar-marco-t">2:30</span></div>
-        <div class="adiar-marco" data-marco="3"><span class="adiar-marco-dot"></span><span class="adiar-marco-t">1:00</span></div>
-        <div class="adiar-marco" data-marco="4"><span class="adiar-marco-dot"></span><span class="adiar-marco-t">0:00</span></div>
+        <div class="adiar-marco ativo" data-marco="0"><span class="adiar-marco-emoji">👀</span><span class="adiar-marco-t">Ver</span></div>
+        <div class="adiar-marco" data-marco="1"><span class="adiar-marco-emoji">👂</span><span class="adiar-marco-t">Ouvir</span></div>
+        <div class="adiar-marco" data-marco="2"><span class="adiar-marco-emoji">✋</span><span class="adiar-marco-t">Tocar</span></div>
+        <div class="adiar-marco" data-marco="3"><span class="adiar-marco-emoji">👃</span><span class="adiar-marco-t">Cheirar</span></div>
+        <div class="adiar-marco" data-marco="4"><span class="adiar-marco-emoji">👅</span><span class="adiar-marco-t">Saborear</span></div>
       </div>
 
-      <p id="adiar-motivacao" style="font-size:14px; color:var(--cor-secundaria); margin-top:10px; font-weight:500; min-height:20px;"></p>
       <div id="adiar-timer-buttons" style="display:flex; gap:10px; justify-content:center; margin-top:12px;">
-        <button class="btn btn-primary btn-sm" id="adiar-btn-start">🌊 Começar a surfar</button>
+        <button class="btn btn-primary btn-sm" id="adiar-btn-start">🖐 Começar os 5 minutos</button>
+      </div>
+    </div>
+
+    <!-- Palco do passo atual (5-4-3-2-1) -->
+    <div id="adiar-54321-stage" class="adiar-54321-stage">
+      <div class="adiar-intro-card">
+        <p>Um sentido por minuto: 👀 👂 ✋ 👃 👅. Escreva o que você percebe, sem pressa e sem julgamento. A fissura não aguenta 5 minutos de atenção total no presente.</p>
       </div>
     </div>
     <p class="estrategia-frase-usuario" data-strategy-id="adiar">"Sua frase motivacional"</p>

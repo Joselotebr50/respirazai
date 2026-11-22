@@ -173,98 +173,276 @@ document.querySelectorAll('.estrategia-btn-fumou').forEach(btn => {
   });
 });
 
-// ===== ADIAR 5 MIN: MODO ONDA (fissura sobe, pica e desce) =====
-const ADIAR_DURATION_S = 300; // 5 minutos
+// ===== ADIAR 5 MIN: TÉCNICA 5-4-3-2-1 (ancoragem sensorial guiada) =====
+const ADIAR_DURATION_S = 300; // 5 minutos — 1 minuto por sentido
 const ADIAR_CIRCUMFERENCE = 339.29;
+const ADIAR_STEP_MS = 60000; // cada sentido ocupa 1 minuto
 let adiarTimerInterval = null;
-let adiarFaseAtual = -1;
+let adiarStepAtual = -1;
+let adiarPassosFeitos = [false, false, false, false, false];
+let adiarRespostas = []; // adiarRespostas[stepIdx] = array de strings
+let adiarElapsed = 0;
 
-// Fases da onda: [fimEmMs, classe, mensagem, cor do anel, índice do marco]
-// A fissura (onda) sobe até ~40% do tempo (pico), depois desce.
-const ADIAR_FASES = [
-  { ate: 0,     classe: 'fase-subida',  marco: 0,
-    msg: 'A onda está subindo. Respire fundo e permaneça aqui.',
-    ring: '#fbbf24' },
-  { ate: 90000, classe: 'fase-subida',  marco: 1,
-    msg: 'Subindo... desconfortável, mas normal. É só temporário.',
-    ring: '#fbbf24' },
-  { ate: 150000, classe: 'fase-pico',   marco: 2,
-    msg: '🌊 PICO DA ONDA — o momento mais difícil. Daqui pra frente só desce!',
-    ring: '#f87171' },
-  { ate: 240000, classe: 'fase-descida', marco: 3,
-    msg: 'A onda já está descendo. Mais rápido do que você imaginava, né?',
-    ring: '#4fd1f0' },
-  { ate: 300000, classe: 'fase-vitoria', marco: 4,
-    msg: 'Quase na calmaria... aguenta firme!',
-    ring: '#4fd1f0' },
+// Os 5 sentidos, um por minuto. Cor = cor do anel do cronômetro.
+const ADIAR_PASSOS = [
+  { emoji: '👀', sentido: 'Ver', cor: '#4fd1f0', count: 5,
+    titulo: '5 coisas que você vê',
+    prompt: 'Olhe ao redor e nomeie 5 coisas que você pode ver agora.',
+    exemplos: 'Ex.: o teto, uma janela, um copo, o seu pé no chão...' },
+  { emoji: '👂', sentido: 'Ouvir', cor: '#a78bfa', count: 4,
+    titulo: '4 sons ao seu redor',
+    prompt: 'Feche os olhos um instante e perceba 4 sons diferentes.',
+    exemplos: 'Ex.: um carro passando, o vento, vozes, o ventilador...' },
+  { emoji: '✋', sentido: 'Tocar', cor: '#fbbf24', count: 3,
+    titulo: '3 sensações no seu corpo',
+    prompt: 'Perceba 3 sensações de toque no seu corpo agora.',
+    exemplos: 'Ex.: a roupa na pele, o chão nos pés, o celular na mão...' },
+  { emoji: '👃', sentido: 'Cheirar', cor: '#f472b6', count: 2,
+    titulo: '2 cheiros no ambiente',
+    prompt: 'Perceba 2 cheiros presentes no ambiente.',
+    exemplos: 'Ex.: café, sabão, o ar da rua, um perfume...' },
+  { emoji: '👅', sentido: 'Saborear', cor: '#22c55e', count: 1,
+    titulo: '1 gosto que você percebe',
+    prompt: 'Por fim, 1 gosto — na boca ou no ar que você respira.',
+    exemplos: 'Ex.: o café ainda na língua, menta, o próprio ar...' },
 ];
-const ADIAR_FASE_INICIO = {
-  classe: 'fase-subida',
-  msg: 'A onda está prestes a subir. Toque em começar quando estiver pronto.',
-  ring: '#4fd1f0',
-};
-const ADIAR_VITORIA = {
-  msg: '🏆 A onda passou! Você surfou a fissura inteira. Ela sempre passa.',
-  ring: '#22c55e',
-};
+const ADIAR_COR_INICIO = '#4fd1f0';
+const ADIAR_COR_VITORIA = '#22c55e';
 
-// Curva da fissura: sobe até o pico (50% do tempo = 2:30), desce devagar.
-// Retorna altura da onda em % (6% a 92%).
-function adiarAlturaOnda(elapsedMs) {
-  const total = ADIAR_DURATION_S * 1000;
-  const t = Math.min(elapsedMs / total, 1);
-  const PICO = 0.5; // pico em 2:30 — alinhado com o marco da fase
-  if (t <= PICO) {
-    // subida com leve aceleração (easeInQuad)
-    const p = t / PICO;
-    return 12 + (92 - 12) * p * p;
-  }
-  // descida suave (easeOutCubic) — a fissura vai embora devagar
-  const p = (t - PICO) / (1 - PICO);
-  const queda = 1 - Math.pow(1 - p, 3);
-  return 92 - (92 - 6) * queda;
-}
-
-function adiarAplicarFase(faseIdx, fase) {
-  if (adiarFaseAtual === faseIdx) return;
-  adiarFaseAtual = faseIdx;
-
-  const waveBox = document.getElementById('adiar-wave-box');
-  const faseMsg = document.getElementById('adiar-fase-msg');
-  const faseText = document.getElementById('adiar-fase-text');
-  const marcos = document.getElementById('adiar-marcos');
-  const ring = document.getElementById('adiar-timer-ring');
-  const labelEl = document.getElementById('adiar-timer-label');
-
-  // classes de fase
-  ['fase-subida', 'fase-pico', 'fase-descida', 'fase-vitoria'].forEach(c => {
-    if (waveBox) waveBox.classList.remove(c);
-    if (faseMsg) faseMsg.classList.remove(c);
-    if (marcos) marcos.classList.remove(c);
+function adiarEscapar(txt) {
+  return String(txt).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
-  if (waveBox) waveBox.classList.add(fase.classe);
-  if (faseMsg) faseMsg.classList.add(fase.classe);
-  if (marcos) marcos.classList.add(fase.classe);
+}
 
-  // mensagem da fase
-  if (faseText) faseText.textContent = fase.msg;
-  if (labelEl) labelEl.textContent = fase.classe === 'fase-pico' ? 'Pico da onda' : 'Surfando...';
+function adiarFmtTempo(ms) {
+  var s = Math.max(0, Math.ceil(ms / 1000));
+  return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
+}
 
-  // cor do anel
-  if (ring) ring.style.stroke = fase.ring;
+function adiarSetChips(atual) {
+  var marcos = document.getElementById('adiar-marcos');
+  if (!marcos) return;
+  marcos.querySelectorAll('.adiar-marco').forEach(function (m) {
+    var idx = parseInt(m.dataset.marco, 10);
+    m.classList.toggle('completo', idx < atual || adiarPassosFeitos[idx] === true);
+    m.classList.toggle('ativo', idx === atual && !adiarPassosFeitos[idx]);
+  });
+}
 
-  // marcos: marca anteriores como completos, atual como ativo
-  if (marcos) {
-    marcos.querySelectorAll('.adiar-marco').forEach(m => {
-      const idx = parseInt(m.dataset.marco);
-      m.classList.toggle('completo', idx < fase.marco);
-      m.classList.toggle('ativo', idx === fase.marco);
-    });
+function adiarSetAnel(cor, labelTxt) {
+  var ring = document.getElementById('adiar-timer-ring');
+  var labelEl = document.getElementById('adiar-timer-label');
+  if (ring) ring.style.stroke = cor;
+  if (labelEl && labelTxt) labelEl.textContent = labelTxt;
+}
+
+function adiarColetarRespostas(idx) {
+  var arr = [];
+  document.querySelectorAll('.adiar-input[data-step="' + idx + '"]').forEach(function (inp) {
+    var v = (inp.value || '').trim();
+    if (v) arr.push(v);
+  });
+  adiarRespostas[idx] = arr;
+  return arr;
+}
+
+function adiarConcluirPasso(idx) {
+  adiarColetarRespostas(idx);
+  adiarPassosFeitos[idx] = true;
+  if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
+  adiarRenderEspera(idx);
+}
+
+function adiarHistoricoCont() {
+  try { return parseInt(localStorage.getItem('respira_adiar_54321_count') || '0', 10) || 0; }
+  catch (e) { return 0; }
+}
+
+function adiarRenderPasso(idx) {
+  var passo = ADIAR_PASSOS[idx];
+  var stage = document.getElementById('adiar-54321-stage');
+  if (!stage || !passo) return;
+  adiarStepAtual = idx;
+  adiarSetChips(idx);
+  adiarSetAnel(passo.cor, 'Passo ' + (idx + 1) + ' de 5 — ' + passo.sentido);
+  if (navigator.vibrate) navigator.vibrate(60);
+
+  var inputs = '';
+  for (var i = 0; i < passo.count; i++) {
+    inputs += '<input type="text" class="adiar-input" data-step="' + idx + '" maxlength="60" autocomplete="off" placeholder="' + (i + 1) + 'º...">';
+  }
+  stage.innerHTML =
+    '<div class="adiar-step-card">' +
+      '<div class="adiar-step-top">' +
+        '<span class="adiar-step-emoji">' + passo.emoji + '</span>' +
+        '<div><div class="adiar-step-count">Minuto ' + (idx + 1) + ' de 5</div>' +
+        '<div class="adiar-step-title">' + passo.titulo + '</div></div>' +
+      '</div>' +
+      '<p class="adiar-step-prompt">' + passo.prompt + '</p>' +
+      inputs +
+      '<button class="adiar-btn-pronto" id="adiar-btn-pronto">Pronto ✓</button>' +
+      '<p class="adiar-step-exemplos">' + passo.exemplos + '</p>' +
+    '</div>';
+
+  var btn = document.getElementById('adiar-btn-pronto');
+  if (btn) btn.addEventListener('click', function () { adiarConcluirPasso(idx); });
+}
+
+function adiarRenderEspera(idxConcluido) {
+  var stage = document.getElementById('adiar-54321-stage');
+  if (!stage) return;
+  adiarSetChips(idxConcluido);
+
+  var concluido = ADIAR_PASSOS[idxConcluido];
+  var isUltimo = idxConcluido === ADIAR_PASSOS.length - 1;
+  var restanteTotal = ADIAR_DURATION_S * 1000 - adiarElapsed;
+  var clockTxt = isUltimo
+    ? adiarFmtTempo(restanteTotal)
+    : adiarFmtTempo(ADIAR_STEP_MS - (adiarElapsed % ADIAR_STEP_MS));
+
+  var nextHtml = isUltimo
+    ? '<p class="adiar-waiting-sub">Você ancorou os 5 sentidos. Deixe o tempo terminar — a fissura já está perdendo a força.</p>'
+    : '<p class="adiar-waiting-sub">Próximo passo: ' + ADIAR_PASSOS[idxConcluido + 1].emoji + ' ' + ADIAR_PASSOS[idxConcluido + 1].sentido + '</p>';
+
+  var respostas = adiarRespostas[idxConcluido] || [];
+  var recapHtml = '';
+  if (respostas.length) {
+    recapHtml = '<div class="adiar-recap">' + respostas.map(function (r) {
+      return '<div class="adiar-recap-item"><b>·</b> <span>' + adiarEscapar(r) + '</span></div>';
+    }).join('') + '</div>';
   }
 
-  // vibração curta ao entrar na fase (se suportado)
-  if (navigator.vibrate) navigator.vibrate(fase.classe === 'fase-pico' ? [80, 60, 80] : 60);
+  stage.innerHTML =
+    '<div class="adiar-waiting-card">' +
+      '<div class="adiar-waiting-emoji">' + concluido.emoji + '</div>' +
+      '<div class="adiar-waiting-title">' + adiarEscapar(concluido.sentido) + ' — concluído ✓</div>' +
+      nextHtml +
+      '<div class="adiar-waiting-next" id="adiar-waiting-clock">' + clockTxt + '</div>' +
+      recapHtml +
+      '<div class="adiar-pulse"></div>' +
+    '</div>';
 }
+
+function adiarRenderVitoria() {
+  var stage = document.getElementById('adiar-54321-stage');
+  if (!stage) return;
+  adiarStepAtual = ADIAR_PASSOS.length; // impede avanços no tick
+  adiarSetChips(ADIAR_PASSOS.length);
+  adiarSetAnel(ADIAR_COR_VITORIA, 'Fissura vencida!');
+
+  // histórico local (offline)
+  var count = adiarHistoricoCont() + 1;
+  try { localStorage.setItem('respira_adiar_54321_count', String(count)); } catch (e) {}
+
+  var temRespostas = adiarRespostas.some(function (a) { return a && a.length; });
+  var recapHtml = '';
+  if (temRespostas) {
+    recapHtml = '<div class="adiar-recap">';
+    adiarRespostas.forEach(function (arr, idx) {
+      if (!arr || !arr.length) return;
+      recapHtml += '<div class="adiar-recap-item"><b>' + ADIAR_PASSOS[idx].emoji + ' ' + ADIAR_PASSOS[idx].sentido + ':</b> <span>' + arr.map(adiarEscapar).join(', ') + '</span></div>';
+    });
+    recapHtml += '</div>';
+  }
+
+  stage.innerHTML =
+    '<div class="adiar-vitoria-card">' +
+      '<div class="adiar-vitoria-emoji">🏆</div>' +
+      '<div class="adiar-vitoria-title">5 minutos vencidos!</div>' +
+      '<p class="adiar-vitoria-sub">' + (temRespostas
+        ? 'Você ancorou os 5 sentidos no presente. A fissura não aguentou 5 minutos de atenção total.'
+        : 'Você atravessou os 5 minutos inteirinhos. A fissura sempre passa.') + '</p>' +
+      recapHtml +
+      '<div class="adiar-vitoria-hist">' + count + 'ª vez que você atravessa os 5 minutos com os 5 sentidos</div>' +
+    '</div>';
+
+  var buttonsEl = document.getElementById('adiar-timer-buttons');
+  if (buttonsEl) {
+    buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-mais">⏳ Adiar mais 5 min</button>';
+    var btnMais = document.getElementById('adiar-btn-mais');
+    if (btnMais) btnMais.addEventListener('click', function () { adiarIniciarTimer(); });
+  }
+  adiarConfete();
+  if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 200]);
+}
+
+function adiarIniciarTimer() {
+  if (adiarTimerInterval) { clearInterval(adiarTimerInterval); adiarTimerInterval = null; }
+
+  var ring = document.getElementById('adiar-timer-ring');
+  var countdownEl = document.getElementById('adiar-timer-countdown');
+  var buttonsEl = document.getElementById('adiar-timer-buttons');
+  if (!ring || !countdownEl) return;
+
+  adiarStepAtual = -1;
+  adiarPassosFeitos = [false, false, false, false, false];
+  adiarRespostas = [];
+  adiarElapsed = 0;
+
+  var totalMs = ADIAR_DURATION_S * 1000;
+  var tickMs = 250;
+
+  if (buttonsEl) {
+    buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-reiniciar">↺ Reiniciar</button>';
+    var btnR = document.getElementById('adiar-btn-reiniciar');
+    if (btnR) btnR.addEventListener('click', function () { adiarIniciarTimer(); });
+  }
+
+  adiarTimerInterval = setInterval(function () {
+    adiarElapsed += tickMs;
+
+    if (adiarElapsed >= totalMs) {
+      clearInterval(adiarTimerInterval);
+      adiarTimerInterval = null;
+      // coleta silenciosa do último passo antes da vitória (caso não tenha tocado em "Pronto")
+      if (adiarStepAtual >= 0 && adiarStepAtual < ADIAR_PASSOS.length && !adiarPassosFeitos[adiarStepAtual]) {
+        adiarColetarRespostas(adiarStepAtual);
+        adiarPassosFeitos[adiarStepAtual] = true;
+      }
+      if (countdownEl) countdownEl.textContent = '0:00';
+      if (ring) ring.style.strokeDashoffset = String(ADIAR_CIRCUMFERENCE);
+      adiarRenderVitoria();
+      return;
+    }
+
+    // countdown
+    var remaining = Math.ceil((totalMs - adiarElapsed) / 1000);
+    var min = Math.floor(remaining / 60);
+    var sec = remaining % 60;
+    countdownEl.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
+
+    // anel
+    var fraction = adiarElapsed / totalMs;
+    ring.style.strokeDashoffset = String(ADIAR_CIRCUMFERENCE * fraction);
+
+    // passo atual: 1 sentido por minuto — avança automaticamente no fim de cada minuto
+    var idx = Math.min(Math.floor(adiarElapsed / ADIAR_STEP_MS), ADIAR_PASSOS.length - 1);
+    if (idx !== adiarStepAtual) {
+      // fim do minuto anterior: coleta silenciosa (mesmo sem "Pronto")
+      if (adiarStepAtual >= 0 && adiarStepAtual < ADIAR_PASSOS.length && !adiarPassosFeitos[adiarStepAtual]) {
+        adiarColetarRespostas(adiarStepAtual);
+        adiarPassosFeitos[adiarStepAtual] = true;
+      }
+      adiarRenderPasso(idx);
+    } else if (adiarPassosFeitos[idx]) {
+      // passo concluído antes do tempo: só atualiza o relógio da tela de espera
+      var clock = document.getElementById('adiar-waiting-clock');
+      if (clock) {
+        clock.textContent = (idx === ADIAR_PASSOS.length - 1)
+          ? adiarFmtTempo(totalMs - adiarElapsed)
+          : adiarFmtTempo(ADIAR_STEP_MS - (adiarElapsed % ADIAR_STEP_MS));
+      }
+    }
+  }, tickMs);
+
+  // primeiro passo começa imediatamente
+  adiarRenderPasso(0);
+}
+
+// Wire adiar start button
+var adiarStartBtn = document.getElementById('adiar-btn-start');
+if (adiarStartBtn) adiarStartBtn.addEventListener('click', adiarIniciarTimer);
 
 function adiarConfete() {
   const container = document.getElementById('adiar-confetti');
@@ -284,113 +462,36 @@ function adiarConfete() {
   setTimeout(() => { container.innerHTML = ''; }, 4000);
 }
 
-function adiarIniciarTimer() {
-  if (adiarTimerInterval) { clearInterval(adiarTimerInterval); adiarTimerInterval = null; }
-
-  const ring = document.getElementById('adiar-timer-ring');
-  const countdownEl = document.getElementById('adiar-timer-countdown');
-  const labelEl = document.getElementById('adiar-timer-label');
-  const buttonsEl = document.getElementById('adiar-timer-buttons');
-  const waveFill = document.getElementById('adiar-wave-fill');
-  const waveLabel = document.getElementById('adiar-wave-label');
-  if (!ring || !countdownEl) return;
-
-  let elapsed = 0;
-  const totalMs = ADIAR_DURATION_S * 1000;
-  const tickMs = 200;
-
-  // estado inicial: fase 0
-  adiarFaseAtual = -1;
-  adiarAplicarFase(0, ADIAR_FASES[0]);
-  if (waveLabel) waveLabel.textContent = 'Surfe a onda — ela vai passar';
-  if (buttonsEl) {
-    buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-mais">↺ Reiniciar onda</button>';
-    var btnMais = document.getElementById('adiar-btn-mais');
-    if (btnMais) btnMais.addEventListener('click', function() { adiarIniciarTimer(); });
-  }
-
-  adiarTimerInterval = setInterval(function() {
-    elapsed += tickMs;
-    if (elapsed >= totalMs) {
-      clearInterval(adiarTimerInterval);
-      adiarTimerInterval = null;
-      countdownEl.textContent = '0:00';
-      if (labelEl) labelEl.textContent = 'Onda vencida!';
-      if (ring) ring.style.strokeDashoffset = String(ADIAR_CIRCUMFERENCE);
-      if (ring) ring.style.stroke = ADIAR_VITORIA.ring;
-      if (waveFill) waveFill.style.height = '6%';
-      // vitória: mensagem, classes, confete, vibração longa
-      adiarAplicarFase(ADIAR_FASES.length, { classe: 'fase-vitoria', marco: 5, msg: ADIAR_VITORIA.msg, ring: ADIAR_VITORIA.ring });
-      adiarConfete();
-      if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 200]);
-      if (buttonsEl) {
-        buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-mais">🌊 Adiar mais 5 min</button>';
-        var btnMais = document.getElementById('adiar-btn-mais');
-        if (btnMais) btnMais.addEventListener('click', function() { adiarIniciarTimer(); });
-      }
-      return;
-    }
-
-    // countdown
-    var remaining = Math.ceil((totalMs - elapsed) / 1000);
-    var min = Math.floor(remaining / 60);
-    var sec = remaining % 60;
-    countdownEl.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
-
-    // anel
-    var fraction = elapsed / totalMs;
-    ring.style.strokeDashoffset = String(ADIAR_CIRCUMFERENCE * fraction);
-
-    // altura da onda
-    if (waveFill) waveFill.style.height = adiarAlturaOnda(elapsed) + '%';
-
-    // fase atual
-    for (var i = 0; i < ADIAR_FASES.length; i++) {
-      if (elapsed < ADIAR_FASES[i].ate || i === ADIAR_FASES.length - 1) {
-        adiarAplicarFase(i, ADIAR_FASES[i]);
-        break;
-      }
-    }
-  }, tickMs);
-}
-
-// Wire adiar start button
-var adiarStartBtn = document.getElementById('adiar-btn-start');
-if (adiarStartBtn) adiarStartBtn.addEventListener('click', adiarIniciarTimer);
-
-// Reset timer when entering the screen
+// Reset when entering the screen
 function adiarReset() {
   if (adiarTimerInterval) { clearInterval(adiarTimerInterval); adiarTimerInterval = null; }
   var ring = document.getElementById('adiar-timer-ring');
   var countdown = document.getElementById('adiar-timer-countdown');
   var label = document.getElementById('adiar-timer-label');
   var buttons = document.getElementById('adiar-timer-buttons');
-  var waveFill = document.getElementById('adiar-wave-fill');
-  var waveLabel = document.getElementById('adiar-wave-label');
-  var faseText = document.getElementById('adiar-fase-text');
-  var faseMsg = document.getElementById('adiar-fase-msg');
-  var waveBox = document.getElementById('adiar-wave-box');
   var marcos = document.getElementById('adiar-marcos');
   var confetti = document.getElementById('adiar-confetti');
+  var stage = document.getElementById('adiar-54321-stage');
 
-  adiarFaseAtual = -1;
-  if (ring) { ring.style.strokeDashoffset = '0'; ring.style.stroke = ADIAR_FASE_INICIO.ring; }
+  adiarStepAtual = -1;
+  adiarPassosFeitos = [false, false, false, false, false];
+  adiarRespostas = [];
+  adiarElapsed = 0;
+
+  if (ring) { ring.style.strokeDashoffset = '0'; ring.style.stroke = ADIAR_COR_INICIO; }
   if (countdown) countdown.textContent = '5:00';
   if (label) label.textContent = 'Pronto para começar';
-  if (waveFill) waveFill.style.height = '12%';
-  if (waveLabel) waveLabel.textContent = 'Toque em iniciar e surfe a onda';
-  if (faseText) faseText.textContent = ADIAR_FASE_INICIO.msg;
-  if (faseMsg) { faseMsg.classList.remove('fase-pico', 'fase-descida', 'fase-vitoria'); faseMsg.classList.add('fase-subida'); }
-  if (waveBox) { waveBox.classList.remove('fase-pico', 'fase-descida', 'fase-vitoria'); waveBox.classList.add('fase-subida'); }
   if (marcos) {
-    marcos.classList.remove('fase-pico', 'fase-descida', 'fase-vitoria');
     marcos.querySelectorAll('.adiar-marco').forEach(m => {
-      m.classList.remove('completo');
-      m.classList.toggle('ativo', m.dataset.marco === '0');
+      m.classList.remove('completo', 'ativo');
+      if (m.dataset.marco === '0') m.classList.add('ativo');
     });
   }
   if (confetti) confetti.innerHTML = '';
-  if (buttons) buttons.innerHTML = '<button class="btn btn-primary btn-sm" id="adiar-btn-start">🌊 Começar a surfar</button>';
+  if (stage) {
+    stage.innerHTML = '<div class="adiar-intro-card"><p>Um sentido por minuto: 👀 👂 ✋ 👃 👅. Escreva o que você percebe, sem pressa e sem julgamento. A fissura não aguenta 5 minutos de atenção total no presente.</p></div>';
+  }
+  if (buttons) buttons.innerHTML = '<button class="btn btn-primary btn-sm" id="adiar-btn-start">🖐 Começar os 5 minutos</button>';
   var btn = document.getElementById('adiar-btn-start');
   if (btn) btn.addEventListener('click', adiarIniciarTimer);
 }
