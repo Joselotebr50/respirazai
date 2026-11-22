@@ -4,7 +4,7 @@
 // (Os DADOS — login e Firestore — continuam precisando de conexão.)
 // Atenção: sempre que os arquivos do app forem atualizados, mude o CACHE_VERSION
 // abaixo para forçar o navegador a buscar os arquivos novos.
-const CACHE_VERSION = 'respira-v23';
+const CACHE_VERSION = 'respira-v24';
 const SDK_CACHE = 'respira-sdk-v1'; // SDK do Firebase (URLs com versão fixa, não muda)
 
 const APP_SHELL = [
@@ -18,6 +18,7 @@ const APP_SHELL = [
   './js/history.js',
   './js/lessons.js',
   './js/onboarding.js',
+  './js/porque.js',
   './js/registroFissura.js',
   './js/strategies.js',
   './js/themeManager.js',

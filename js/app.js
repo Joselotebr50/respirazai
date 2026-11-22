@@ -17,6 +17,7 @@ import { carregarTemaSalvo, aplicarTema } from './themeManager.js';
 import { carregarLessons, getLicaoDoDia } from './lessons.js';
 import { carregarHistory } from './history.js';
 import { cleanupModal } from './registroFissura.js';
+import { porqueSetPerfil } from './porque.js';
 
 // ===== VARIÁVEIS GLOBAIS =====
 export let currentUser = null;
@@ -135,6 +136,7 @@ async function carregarPerfil(user) {
   }
   userProfile = doc.data();
   await carregarMidiaDoUsuario(user.uid);
+  porqueSetPerfil(userProfile); // botão "Lembrar por quê" da home
   // APLICA TEMA
   if (userProfile.tema) {
     aplicarTema(userProfile.tema, userProfile.ajusteImagem || 'top');
@@ -154,6 +156,7 @@ auth.onAuthStateChanged(async (user) => {
   } else {
     currentUser = null;
     userProfile = null;
+    porqueSetPerfil(null); // esconde o botão "Lembrar por quê"
     document.getElementById('login-email').value = '';
     document.getElementById('login-password').value = '';
     document.getElementById('login-message').textContent = '';
@@ -224,7 +227,10 @@ btnFinishOnboarding.addEventListener('click', async () => {
       modoEdicao = false;
       const doc = await db.collection('users').doc(currentUser.uid).get();
       userProfile = doc.exists ? doc.data() : null;
-      if (userProfile) await carregarMidiaDoUsuario(currentUser.uid);
+      if (userProfile) {
+        await carregarMidiaDoUsuario(currentUser.uid);
+        porqueSetPerfil(userProfile);
+      }
       if (userProfile?.tema) aplicarTema(userProfile.tema, userProfile.ajusteImagem || 'top');
       showScreen('screen-dashboard');
       updatePlanBadge();

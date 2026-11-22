@@ -5,6 +5,7 @@ import { iniciarRespiracao } from './subapps/respiracao.js';
 import { iniciarAgua } from './subapps/agua.js';
 import { atualizarContador } from './dashboard.js';
 import { pedirDetalhesFissura } from './registroFissura.js';
+import { porqueAbrir, porqueTemMidia } from './porque.js';
 
 // Cada estratégia carrega os gatilhos (definidos no onboarding, #trigger-group)
 // que ela combate melhor. Usado só para REORDENAR a lista (nunca para esconder
@@ -386,6 +387,15 @@ function adiarRenderEspera(idxConcluido) {
     }).join('') + '</div>';
   }
 
+  // reforço emocional opcional: slideshow "Lembrar por quê" (só se o usuário
+  // cadastrou fotos/frases). É um overlay: o relógio dos 5 min continua rodando.
+  var fotosPerfil = (userProfileAtual || {}).fotos || [];
+  var frasesPerfil = (userProfileAtual || {}).frases || [];
+  var temMidia = porqueTemMidia() || fotosPerfil.length > 0 || frasesPerfil.length > 0;
+  var porqueHtml = temMidia
+    ? '<button class="btn btn-outline btn-sm" id="adiar-btn-porque" style="margin-top:10px;">📸 Lembrar por quê</button>'
+    : '';
+
   stage.innerHTML =
     '<div class="adiar-waiting-card">' +
       '<div class="adiar-waiting-emoji">' + concluido.emoji + '</div>' +
@@ -394,7 +404,10 @@ function adiarRenderEspera(idxConcluido) {
       '<div class="adiar-waiting-next" id="adiar-waiting-clock">' + clockTxt + '</div>' +
       recapHtml +
       '<div class="adiar-pulse"></div>' +
-    '</div>';
+    '</div>' + porqueHtml;
+
+  var btnPorque = document.getElementById('adiar-btn-porque');
+  if (btnPorque) btnPorque.addEventListener('click', function () { porqueAbrir(userProfileAtual); });
 }
 
 function adiarRenderVitoria() {
