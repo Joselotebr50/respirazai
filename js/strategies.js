@@ -209,6 +209,78 @@ const ADIAR_PASSOS = [
 const ADIAR_COR_INICIO = '#4fd1f0';
 const ADIAR_COR_VITORIA = '#22c55e';
 
+// ===== ADIAR: SOM DE FUNDO (ambiente + sino por passo + vitória) =====
+const ADIAR_SOM_KEY = 'respira_adiar_som';
+let adiarAudio = null; // <audio> ambiente em loop
+
+function adiarSomPreferido() {
+  try { return localStorage.getItem(ADIAR_SOM_KEY) || 'ondas'; }
+  catch (e) { return 'ondas'; }
+}
+
+function adiarSomSetPreferido(v) {
+  try { localStorage.setItem(ADIAR_SOM_KEY, v); } catch (e) {}
+}
+
+function adiarSomIniciar() {
+  var pref = adiarSomPreferido();
+  adiarSomParar(false);
+  if (pref === 'nenhum') return;
+  if (!adiarAudio) adiarAudio = new Audio('./audio/' + pref + '.mp3');
+  else adiarAudio.src = './audio/' + pref + '.mp3';
+  adiarAudio.loop = true;
+  adiarAudio.volume = 0.35;
+  adiarAudio.play().catch(function () {}); // autoplay pode ser bloqueado
+}
+
+function adiarSomParar(comFade) {
+  if (!adiarAudio) return;
+  var a = adiarAudio;
+  if (!comFade) { try { a.pause(); } catch (e) {} return; }
+  // fade-out suave para não cortar seco
+  var v = a.volume;
+  var iv = setInterval(function () {
+    v -= 0.07;
+    if (v <= 0.03) { clearInterval(iv); try { a.pause(); } catch (e) {} a.volume = 0.35; }
+    else { try { a.volume = v; } catch (e) {} }
+  }, 70);
+}
+
+function adiarSino() {
+  try {
+    var a = new Audio('./audio/sino.mp3');
+    a.volume = 0.5;
+    a.play().catch(function () {});
+  } catch (e) {}
+}
+
+function adiarSomVitoria() {
+  try {
+    var a = new Audio('./audio/vitoria.mp3');
+    a.volume = 0.6;
+    a.play().catch(function () {});
+  } catch (e) {}
+}
+
+function adiarSomAplicarUI() {
+  var pref = adiarSomPreferido();
+  document.querySelectorAll('.adiar-som-opt').forEach(function (b) {
+    b.classList.toggle('ativo', b.dataset.som === pref);
+  });
+}
+
+// chips do seletor de som (nunca são recriados, wiring único)
+document.querySelectorAll('.adiar-som-opt').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var som = b.dataset.som;
+    adiarSomSetPreferido(som);
+    adiarSomAplicarUI();
+    // se a sessão já está rodando, troca ao vivo
+    if (adiarTimerInterval) adiarSomIniciar();
+  });
+});
+adiarSomAplicarUI();
+
 function adiarEscapar(txt) {
   return String(txt).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -267,6 +339,7 @@ function adiarRenderPasso(idx) {
   adiarSetChips(idx);
   adiarSetAnel(passo.cor, 'Passo ' + (idx + 1) + ' de 5 — ' + passo.sentido);
   if (navigator.vibrate) navigator.vibrate(60);
+  adiarSino(); // sino suave marca o início do sentido
 
   var inputs = '';
   for (var i = 0; i < passo.count; i++) {
@@ -365,6 +438,8 @@ function adiarRenderVitoria() {
   }
   adiarConfete();
   if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 200]);
+  adiarSomParar(true); // ambiente desce suavemente
+  adiarSomVitoria();
 }
 
 function adiarIniciarTimer() {
@@ -382,6 +457,8 @@ function adiarIniciarTimer() {
 
   var totalMs = ADIAR_DURATION_S * 1000;
   var tickMs = 250;
+
+  adiarSomIniciar(); // ambiente começa junto com o gesto de toque
 
   if (buttonsEl) {
     buttonsEl.innerHTML = '<button class="btn btn-outline btn-sm" id="adiar-btn-reiniciar">↺ Reiniciar</button>';
@@ -465,6 +542,7 @@ function adiarConfete() {
 // Reset when entering the screen
 function adiarReset() {
   if (adiarTimerInterval) { clearInterval(adiarTimerInterval); adiarTimerInterval = null; }
+  adiarSomParar(false); // encerra o ambiente ao sair/reentrar na tela
   var ring = document.getElementById('adiar-timer-ring');
   var countdown = document.getElementById('adiar-timer-countdown');
   var label = document.getElementById('adiar-timer-label');
