@@ -3,6 +3,7 @@ import { db } from './firebase.js';
 import { navigateTo } from './app.js';
 import { iniciarRespiracao } from './subapps/respiracao.js';
 import { iniciarAgua } from './subapps/agua.js';
+import { menteIniciar } from './subapps/mente.js';
 import { atualizarContador } from './dashboard.js';
 import { pedirDetalhesFissura } from './registroFissura.js';
 import { porqueAbrir, porqueTemMidia } from './porque.js';
@@ -20,6 +21,7 @@ export const strategies = [
   { id:'sair', label:'Sair do gatilho', emoji:'🚪', triggers:['alcool', 'social'] },
   { id:'respirar', label:'Respiração guiada', emoji:'🧘', triggers:['estresse', 'ansiedade', 'dor'] },
   { id:'adiar', label:'Adiar por 5 min', emoji:'⏳', triggers:['tedio', 'direcao', 'outro'] },
+  { id:'mente', label:'Ocupar a mente', emoji:'🧠', triggers:['ansiedade', 'tedio'] },
   { id:'alongar', label:'Pausa ativa', emoji:'🤸', triggers:['trabalho', 'tedio'] },
   { id:'motivo', label:'Lembrar motivo', emoji:'💪', triggers:['alcool', 'outro'] },
 ];
@@ -86,6 +88,7 @@ export function mostrarEstrategias(user, profile) {
 
 function abrirTelaEstrategia(id) {
   window._selectedStrategyId = id;
+  if (id === 'mente') menteIniciar(); // jogo recomeça a cada entrada
   const fraseEl = document.querySelector(`.estrategia-frase-usuario[data-strategy-id="${id}"]`);
   if (fraseEl) {
     const frases = userProfileAtual?.frases || [];

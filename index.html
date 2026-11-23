@@ -172,6 +172,31 @@
     .tema-alongar::before { content:'🤸'; top:-30px; left:-30px; transform:rotate(-18deg); }
     .tema-motivo { background:linear-gradient(160deg, color-mix(in srgb, var(--cor-destaque) 34%, var(--bg-fundo)), var(--bg-fundo) 70%); }
     .tema-motivo::before { content:'💪'; bottom:-40px; right:-20px; transform:rotate(12deg); }
+    .tema-mente { background:linear-gradient(160deg, color-mix(in srgb, var(--cor-secundaria) 32%, var(--bg-fundo)), color-mix(in srgb, var(--cor-primaria) 12%, var(--bg-fundo)) 70%); }
+    .tema-mente::before { content:'🧠'; top:-36px; right:-36px; transform:rotate(12deg); }
+
+    /* ===== OCUPAR A MENTE: NÚMEROS INVERTIDOS ===== */
+    .mente-card { background:var(--bg-card); border:1px solid var(--borda); border-radius:20px;
+      padding:24px 18px; text-align:center; max-width:380px; margin:14px auto 0;
+      transition:border-color .35s ease, box-shadow .35s ease; }
+    .mente-card.ok { border-color:rgba(34,197,94,.65); box-shadow:0 0 26px rgba(34,197,94,.18); }
+    .mente-card.erro { border-color:rgba(239,68,68,.65); box-shadow:0 0 26px rgba(239,68,68,.16); }
+    .mente-nivel { font-size:12px; letter-spacing:2.5px; text-transform:uppercase; color:var(--texto-fraco); margin-bottom:8px; }
+    .mente-numero { font-size:58px; font-weight:200; letter-spacing:.14em; color:var(--texto-principal);
+      text-shadow:0 0 20px color-mix(in srgb, var(--cor-secundaria) 50%, transparent);
+      margin:8px 0 6px; min-height:72px; line-height:72px; }
+    .mente-numero span { display:inline-block; opacity:0; transform:translateY(10px); animation:menteDigito .4s ease forwards; }
+    @keyframes menteDigito { to { opacity:1; transform:none; } }
+    .mente-sub { font-size:14px; color:var(--texto-medio); line-height:1.5; margin:0 0 14px; }
+    .mente-input { width:100%; max-width:260px; text-align:center; font-size:30px; letter-spacing:.18em;
+      padding:12px; border-radius:14px; border:1px solid var(--borda);
+      background:rgba(255,255,255,.05); color:var(--texto-principal); outline:none;
+      transition:border-color .25s ease; margin:0 auto; display:block; }
+    .mente-input:focus { border-color:var(--cor-secundaria); box-shadow:0 0 14px rgba(79,209,240,.15); }
+    .mente-feedback { min-height:24px; font-size:16px; font-weight:600; margin-top:12px; }
+    .mente-feedback.ok { color:#22c55e; }
+    .mente-feedback.erro { color:#ef4444; }
+    .mente-rodape { font-size:12px; color:var(--texto-fraco); margin-top:10px; }
     .tema-agua { background:linear-gradient(160deg, color-mix(in srgb, var(--cor-secundaria) 42%, var(--bg-fundo)), var(--bg-fundo) 70%); }
     .tema-agua::before { content:'💦'; top:-30px; left:-30px; transform:rotate(-10deg); }
     .tema-respirar { background:linear-gradient(160deg, color-mix(in srgb, var(--cor-primaria) 34%, var(--bg-fundo)), color-mix(in srgb, var(--cor-secundaria) 18%, var(--bg-fundo)) 70%); }
@@ -1472,6 +1497,20 @@
     <div class="estrategia-confirmacao">
       <button class="btn btn-success estrategia-btn-venceu" data-strategy-id="motivo">✅ Resisti à fissura</button>
       <button class="btn btn-danger estrategia-btn-fumou" data-strategy-id="motivo">❌ Acabei fumando</button>
+    </div>
+  </div>
+
+  <div id="screen-estrategia-mente" class="screen tela-estrategia tema-mente">
+    <div class="app-header">
+      <h2 style="font-size:18px;">🧠 Ocupar a mente</h2>
+      <button class="logout-btn btn-estrategia-voltar">Voltar</button>
+    </div>
+    <div id="mente-palco"></div>
+    <p class="estrategia-dica">Um número por vez, de trás para frente. O cérebro não consegue pensar em cigarro enquanto guarda e inverte uma sequência — é a mesma técnica de foco que os neuropsicólogos usam. Sem placar, sem pressa: pare quando quiser.</p>
+    <p class="estrategia-frase-usuario" data-strategy-id="mente">"Sua frase motivacional"</p>
+    <div class="estrategia-confirmacao">
+      <button class="btn btn-success estrategia-btn-venceu" data-strategy-id="mente">✅ Resisti à fissura</button>
+      <button class="btn btn-danger estrategia-btn-fumou" data-strategy-id="mente">❌ Acabei fumando</button>
     </div>
   </div>
 
